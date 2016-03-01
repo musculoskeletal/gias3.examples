@@ -1,6 +1,6 @@
 """
 FILE: build2DMesh.py
-LAST MODIFIED: 24-12-2015 
+LAST MODIFIED: 02-03-2016 
 DESCRIPTION: functions and classes for creating meshes using cubic lagrange
 elements.
 
@@ -24,7 +24,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import sys
 from gias2.fieldwork.field import geometric_field
-from gias2.fieldwork.interactive import meshBuilder
+from gias2.fieldwork.interactive import mesh_builder
 from gias2.mesh import simplemesh
 
 # load surface data
@@ -54,7 +54,7 @@ curveElemBasis = {
 loadMesh = False
 
 # initialise mesh builder
-MB = meshBuilder.meshBuilder()
+MB = mesh_builder.MeshBuilder()
 MB.setSurfaceData(data)
 #~ MB.setCurveElemBasis( curveElemBasis )
 if not loadMesh:
@@ -73,7 +73,7 @@ MB.setGFVersion( version )
 	#~ MB.loadBoundaryCurve( c[0], c[1], c[2] )
 
 # intialise viewer
-V = meshBuilder.viewer()
+V = mesh_builder.Viewer()
 V.setMeshBuilder(MB)
 V.configure_traits()
 
