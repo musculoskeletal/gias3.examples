@@ -13,6 +13,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ===============================================================================
 """
 
+import numpy as np
 from gias2.mesh import simplemesh
 from gias2.mesh import vtktools
 from gias2.visualisation import fieldvi
@@ -28,8 +29,11 @@ output_filename_vtp = 'outputs/autoCarpal1_outer_stl.vtp'
 # the example geometry
 mesh = simplemesh.stl2SimpleMesh(input_filename)
 
+# create random colours for vertices
+vcolours = np.random.random_integers(0,255, mesh.v.shape[0]*3).reshape([-1,3])
+
 # write out in various formats
-writer = vtktools.Writer(v=mesh.v, f=mesh.f)
+writer = vtktools.Writer(v=mesh.v, f=mesh.f, vcolour=vcolours)
 writer.writePLY(output_filename_ply)
 writer.writeOBJ(output_filename_obj)
 writer.writeSTL(output_filename_stl)
