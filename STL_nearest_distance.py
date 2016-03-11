@@ -38,8 +38,8 @@ distMax = cDist.max()
 distMin = cDist.min()
 
 # print results
-print 'Distance Summary:\n mean: %(u)8.6f\n S.D.: %(sd)8.6f\n RMS: %(rms)8.6f\n max: %(max)8.6f\n min: %(min)8.6f'\
-		%{'u':distMean, 'sd':distSD, 'rms':distRMS, 'max':distMax, 'min':distMin}
+print('Distance Summary:\n mean: %(u)8.6f\n S.D.: %(sd)8.6f\n RMS: %(rms)8.6f\n max: %(max)8.6f\n min: %(min)8.6f'\
+		%{'u':distMean, 'sd':distSD, 'rms':distRMS, 'max':distMax, 'min':distMin})
 
 # render 
 V = fieldvi.Fieldvi()

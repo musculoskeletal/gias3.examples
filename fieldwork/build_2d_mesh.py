@@ -58,9 +58,9 @@ MB = mesh_builder.MeshBuilder()
 MB.setSurfaceData(data)
 #~ MB.setCurveElemBasis( curveElemBasis )
 if not loadMesh:
-	MB.initialiseGF(GFName, 2, 3, GFElemBasis)
+  MB.initialiseGF(GFName, 2, 3, GFElemBasis)
 else:
-	MB.loadGF(
+  MB.loadGF(
               GFFName+'_'+version+'.geof',
               ensFName+'_'+version+'.ens',
               meshFName+'_'+version+'.mesh'
@@ -70,7 +70,7 @@ MB.setGFFilenames( GFFName, ensFName, meshFName )
 MB.setGFVersion( version )
 
 #~ for c in boundaryCurveFiles:
-	#~ MB.loadBoundaryCurve( c[0], c[1], c[2] )
+  #~ MB.loadBoundaryCurve( c[0], c[1], c[2] )
 
 # intialise viewer
 V = mesh_builder.Viewer()

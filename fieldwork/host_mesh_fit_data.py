@@ -33,8 +33,13 @@ from gias2.fieldwork.field.tools import fitting_tools
 from gias2.fieldwork.field import geometric_field
 from gias2.fieldwork.field import geometric_field_fitter as GFF
 from gias2.common import transform3D
-from gias2.visualisation import fieldvi
 from gias2.registration import alignment_fitting as af
+
+try:
+    from gias2.visualisation import fieldvi
+    has_mayavi = True
+except ImportError:
+    has_mayavi = False
 
 #=============================================================================#
 # fititng parameters for host mesh fitting
@@ -171,15 +176,16 @@ source_points_passive_hmf = eval_source_points_passive(host_x_opt).T
 
 #=============================================================#
 # view
-v = fieldvi.Fieldvi()
-v.addData('target points', target_points, renderArgs={'mode':'point', 'color':(1,0,0)})
-v.addData('source points fitting', source_points_fitting, renderArgs={'mode':'point'})
-v.addData('source points passive', source_points_passive, renderArgs={'mode':'point'})
-v.addData('source points fitting reg1', source_points_fitting_reg1, renderArgs={'mode':'point'})
-v.addData('source points fitting reg2', source_points_fitting_reg2, renderArgs={'mode':'point'})
-v.addData('source points passive reg2', source_points_passive_reg2, renderArgs={'mode':'point'})
-v.addData('source points fitting hmf', source_points_fitting_hmf, renderArgs={'mode':'point'})
-v.addData('source points passive hmf', source_points_passive_hmf, renderArgs={'mode':'point'})
+if has_mayavi:
+    v = fieldvi.Fieldvi()
+    v.addData('target points', target_points, renderArgs={'mode':'point', 'color':(1,0,0)})
+    v.addData('source points fitting', source_points_fitting, renderArgs={'mode':'point'})
+    v.addData('source points passive', source_points_passive, renderArgs={'mode':'point'})
+    v.addData('source points fitting reg1', source_points_fitting_reg1, renderArgs={'mode':'point'})
+    v.addData('source points fitting reg2', source_points_fitting_reg2, renderArgs={'mode':'point'})
+    v.addData('source points passive reg2', source_points_passive_reg2, renderArgs={'mode':'point'})
+    v.addData('source points fitting hmf', source_points_fitting_hmf, renderArgs={'mode':'point'})
+    v.addData('source points passive hmf', source_points_passive_hmf, renderArgs={'mode':'point'})
 
-v.configure_traits()
-v.scene.background=(0,0,0)
+    v.configure_traits()
+    v.scene.background=(0,0,0)

@@ -21,7 +21,7 @@ import time
 
 def timeTest(func, arg, it):
 	t0 = time.time()
-	for i in xrange(it):
+	for i in range(it):
 		x = func(arg)
 	dt = time.time() - t0
 	return dt, x
@@ -31,9 +31,9 @@ dtc, intImageC = timeTest(IIC.makeIntegralArray3, image, 100)
 dt, intImage = timeTest(II.makeIntegralArray3, image, 100)
 
 if np.all(intImage==intImageC):
-	print 'results match'
+	print('results match')
 else:
-	print 'results UNMATCHED'
+	print('results UNMATCHED')
 
-print 'python time:', dt
-print 'cython time:', dtc
+print('python time:', dt)
+print('cython time:', dtc)

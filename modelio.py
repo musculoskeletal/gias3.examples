@@ -31,12 +31,12 @@ V.scene.background=(0,0,0)
 
 # export as INP
 tibiaInpMesh = inp.Mesh('tibia')
-tibiaInpMesh.setNodes(meshes[0].v, range(1, meshes[0].v.shape[0]+1))
-tibiaInpMesh.setElems(meshes[0].f+1, range(1, meshes[0].f.shape[0]+1), 'R3D3') 
+tibiaInpMesh.setNodes(meshes[0].v, list(range(1, meshes[0].v.shape[0]+1)))
+tibiaInpMesh.setElems(meshes[0].f+1, list(range(1, meshes[0].f.shape[0]+1)), 'R3D3') 
 
 fibulaInpMesh = inp.Mesh('fibula')
-fibulaInpMesh.setNodes(meshes[1].v, range(1, meshes[1].v.shape[0]+1))
-fibulaInpMesh.setElems(meshes[1].f+1, range(1, meshes[1].f.shape[0]+1), 'R3D3') 
+fibulaInpMesh.setNodes(meshes[1].v, list(range(1, meshes[1].v.shape[0]+1)))
+fibulaInpMesh.setElems(meshes[1].f+1, list(range(1, meshes[1].f.shape[0]+1)), 'R3D3') 
 
 inpFilename = 'outputs/tibia_fibula.inp'
 inpWriter = inp.InpWriter(inpFilename, autoFormat=True)

@@ -25,16 +25,16 @@ from gias2.visualisation import fieldvi
 mlab = GF.mlab
 
 # make a quadratic quad 4-element mesh
-	
+    
 def z(x, y):
-	return 10*np.cos(x/20) + 10*np.sin(y/20)
+    return 10*np.cos(x/20) + 10*np.sin(y/20)
 
 def makeElemParams( xmin, xmax, ymin, ymax, rpt ):
-	X = np.linspace(xmin,xmax,rpt)
-	X = np.hstack([X,]*rpt)
-	Y = np.linspace(ymin,ymax,rpt).repeat(rpt)
-	Z = z(X,Y)
-	return np.array([X,Y,Z])[:,:,np.newaxis]
+    X = np.linspace(xmin,xmax,rpt)
+    X = np.hstack([X,]*rpt)
+    Y = np.linspace(ymin,ymax,rpt).repeat(rpt)
+    Z = z(X,Y)
+    return np.array([X,Y,Z])[:,:,np.newaxis]
 
 F = EFF.ensemble_field_function( 'quad', 2, debug = 0)
 F.set_basis( {'quad33': 'quad_L2_L2'} )
@@ -76,12 +76,12 @@ V.scene.background = (1,1,1)
 
 # nNodesElemMap = {4:'line4l'}
 # elemBasisMap = {
-# 				'line4l':'line_L3',
-# 				}
+#               'line4l':'line_L3',
+#               }
 # V.drawElementBoundaries( 'quad', [50,],
-# 						 GF.makeGeometricFieldEvaluatorSparse, 
-# 						 nNodesElemMap, elemBasisMap,
-# 						 renderArgs={'color':(0.6,0.6,0.6), 'tube_radius':0.5, 'tube_sides':12} )
+#                        GF.makeGeometricFieldEvaluatorSparse, 
+#                        nNodesElemMap, elemBasisMap,
+#                        renderArgs={'color':(0.6,0.6,0.6), 'tube_radius':0.5, 'tube_sides':12} )
 
 
 
