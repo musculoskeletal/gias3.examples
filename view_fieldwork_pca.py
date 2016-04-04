@@ -57,10 +57,18 @@ V = fieldvi.Fieldvi()
 V.displayGFNodes = False									# hide mesh nodes
 V.GFD = discretisation										# element discretisation
 V.addGeometricField( 'mean model', meanModel, modelEval )	# add mesh to viewer with the evaluator and a name
-V.addPC('mean model', pc)								# add the pca model, it is linked to the mesh by its name
+V.addPC('femur', pc)								# add the pca model, it is linked to the mesh by its name
 V.configure_traits()										# start the viewer
 V.scene.background = (1.0,1.0,1.0)
 
+"""
+To view the principal components of the shape model in the pop up window,
+first select "mean mode" in the GFs combobox and click "update" under it.
+Then go to the "statistical shape model" tab, select "femur" for PC
+Models, and "mean model::gf" for PC Geometry. Then you can select the PC
+you want to view by selecting the corresponding "Mode index" and dragging
+the slider between -2 and +2 standard deviations.
+"""
 #=============================================#
 # export some geometries from the shape model
 
