@@ -67,7 +67,7 @@ def view_host_mesh(v, hm, name):
 # fititng parameters for host mesh fitting
 host_mesh_pad = 0.1 # host mesh padding around slave points
 host_elem_type = 'quad444' # quadrilateral tricubic host elements
-host_elems = [2,1,1] # a single element host mesh
+host_elems = [2,1,1] # a 2 by 1 by 1 element host mesh
 sobw = 1e-6     # weight on sobelov norm, penalises against too much deformation of the host mesh
 sobd = [4,4,4]
 xtol = 1e-12    # relative error for termination
