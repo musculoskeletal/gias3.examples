@@ -2,9 +2,14 @@
 surface_to_surface_distance.py
 ==============================
 Author: Ju Zhang
-Last Modified: 2016-09-15
+Last Modified: 2016-09-16
 
 Script for calculating the distances between 2 surfaces.
+"""
+
+_descStr = """Script for calculating the distances between 2 surfaces.
+Author: Ju Zhang
+Last Modified: 2016-09-16
 
 This script takes 2 surfaces (groundtruth and test) and calculates the Jaccard
 index and the 2-way surface to surface distances. The 2-way distance means for
@@ -14,26 +19,25 @@ number of vertices on the groundtruth and test surfaces respectively. The max,
 mean, and rms of these distances and the Jaccard index are printed to terminal
 or file.
 
-Note that surface vertex density definitely matters since only vertex-to-vertex
-distances are calculated. Sparser the points, less accurate the results
-represent the true surface to surface distance.
+Things to note
+--------------
+- Surface vertex density definitely matters since only vertex-to-vertex
+  distances are calculated. Sparser the points, less accurate the results
+  represent the true surface to surface distance.
 
-The script can be run from the commandline:
+- Units dimension is expected to be in mm. If not, units for the groundtruth
+  and test surface coordinates can be defined by the --groundtruth-unit and
+  --test-unit options.
 
-python surface_to_surface_distance.py path/to/ground/truth.stl path/to/test.ply
+- The format of the surface files can be stl, ply, obj, vrml, or vtp.
 
-or
+- The results are printed to the terminal (and to file if the -o option is
+  specified), e.g.:
 
-python surface_to_surface_distance.py -o path/to/results.txt path/to/groundtruth.stl path/to/test.ply
-
-The format of the surface files can be stl, ply, obj, vrml, or vtp. The results
-are printed to the terminal (and to file if the -o option is specified), e.g.:
-
-dmax: 18.0328460848
-dmean: 1.15626509502
-drms: 1.69911836126
-jaccard: 0.915674848409
-
+    dmax: 18.0328460848
+    dmean: 1.15626509502
+    drms: 1.69911836126
+    jaccard: 0.915674848409
 """
 
 from os import path
@@ -42,6 +46,7 @@ from scipy.spatial.distance import jaccard
 from scipy.spatial import cKDTree
 import numpy as np
 import argparse
+from argparse import RawTextHelpFormatter
 import vtk
 
 from gias2.mesh import vtktools
@@ -52,6 +57,48 @@ try:
 except ImportError:
     print('no visualisation available')
     can_visual = False
+
+def dim_unit_scaling(in_unit, out_unit):
+    """
+    Calculate the scaling factor to convert from the input unit (in_unit) to
+    the output unit (out_unit). in_unit and out_unit must be a string and one
+    of ['nm', 'um', 'mm', 'cm', 'm', 'km']. 
+
+    inputs
+    ======
+    in_unit : str
+        Input unit
+    out_unit :str
+        Output unit
+
+    returns
+    =======
+    scaling_factor : float
+    """
+
+    unit_vals = {
+        'nm': 1e-9,
+        'um': 1e-6,
+        'mm': 1e-3,
+        'cm': 1e-2,
+        'm':  1.0,
+        'km': 1e3,
+        }
+
+    if in_unit not in unit_vals:
+        raise ValueError(
+            'Invalid input unit {}. Must be one of {}'.format(
+                in_unit, list(unit_vals.keys())
+                )
+            )
+    if out_unit not in unit_vals:
+        raise ValueError(
+            'Invalid input unit {}. Must be one of {}'.format(
+                in_unit, list(unit_vals.keys())
+                )
+            )
+
+    return unit_vals[in_unit]/unit_vals[out_unit]
 
 def triSurface2BinaryMask(v, t, imageShape, voxelOrigin=None, voxelSpacing=None, bg=0):
 
@@ -119,12 +166,14 @@ def calcDistance(s1, s2):
 
     return dmax, drms, dmean, (d12, d21)
 
-def calcSegmentationErrors(meshFileTest, meshFileGT, jacImgSpacing):
+def calcSegmentationErrors(meshFileTest, meshFileGT, jacImgSpacing, gtScaling, testScaling):
     # load ground truth segmentation (tri-mesh)
     surfGT = loadMesh(meshFileGT)
+    surfGT.v*=gtScaling
 
     # load test segmentation (tri-mesh)
     surfTest = loadMesh(meshFileTest)
+    surfTest.v*=testScaling
 
     # work out volume size
     volMin = np.min([surfGT.v.min(0), surfTest.v.min(0)], axis=0)
@@ -170,9 +219,13 @@ def writeResults(filepath, testname, gtname, res):
 
 #=============================================================================#
 imgSpacing = np.array([0.5,]*3, dtype=float)
-
+unitChoices = ('nm', 'um', 'mm', 'cm', 'm', 'km')
+defaultUnit = 'mm'
 #=============================================================================#
-parser = argparse.ArgumentParser(description='Script for calculating the distances between 2 surfaces.')
+parser = argparse.ArgumentParser(
+            description=_descStr,
+            formatter_class=RawTextHelpFormatter,
+            )
 parser.add_argument('gTruthPath',
                     help='ground truth surface path')
 parser.add_argument('testPath',
@@ -182,14 +235,27 @@ parser.add_argument('-o', '--outpath',
 parser.add_argument('-d', '--display',
                     action='store_true',
                     help='visualise results')
+parser.add_argument('--groundtruth-unit',
+                    action='store',
+                    default='mm',
+                    choices=unitChoices,
+                    help='unit of ground truth coordinates')
+parser.add_argument('--test-unit',
+                    action='store',
+                    default='mm',
+                    choices=unitChoices,
+                    help='unit of test coordinates')
 
 if __name__ == '__main__':
     args = parser.parse_args()
-
+    gtUnitScaling = dim_unit_scaling(args.groundtruth_unit, defaultUnit)
+    testUnitScaling = dim_unit_scaling(args.test_unit, defaultUnit)
     results, surfTest, surfGT, imgTest, imgGT = calcSegmentationErrors(
                                     args.testPath,
                                     args.gTruthPath,
                                     imgSpacing,
+                                    gtUnitScaling,
+                                    testUnitScaling
                                     )
     for k, v in results.items():
         print '{}: {}'.format(k, v)
