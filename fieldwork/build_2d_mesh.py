@@ -37,7 +37,7 @@ GFName = 'test_mesh'
 GFFName = 'data/test_mesh'
 ensFName = 'data/test_mesh'
 meshFName = 'data/test_mesh'
-version = '1.0'
+version = ''
 
 # types of elements and basis functions we will use.
 # choosing other element types in the mesh builder will lead to errors
@@ -58,9 +58,16 @@ MB = mesh_builder.MeshBuilder()
 MB.setSurfaceData(data)
 #~ MB.setCurveElemBasis( curveElemBasis )
 if not loadMesh:
-  MB.initialiseGF(GFName, 2, 3, GFElemBasis)
+    MB.initialiseGF(GFName, 2, 3, GFElemBasis)
 else:
-  MB.loadGF(
+    if (version is None) or (len(version)==0):
+        MB.loadGF(
+              GFFName+'.geof',
+              ensFName+'.ens',
+              meshFName+'.mesh'
+              ) 
+    else:
+        MB.loadGF(
               GFFName+'_'+version+'.geof',
               ensFName+'_'+version+'.ens',
               meshFName+'_'+version+'.mesh'
