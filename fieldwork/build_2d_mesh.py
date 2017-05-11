@@ -37,7 +37,7 @@ GFName = 'test_mesh'
 GFFName = 'data/test_mesh'
 ensFName = 'data/test_mesh'
 meshFName = 'data/test_mesh'
-version = ''
+version = '1.0'
 
 # types of elements and basis functions we will use.
 # choosing other element types in the mesh builder will lead to errors
