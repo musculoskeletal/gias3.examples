@@ -2,7 +2,7 @@
 surface_to_surface_distance.py
 ==============================
 Author: Ju Zhang
-Last Modified: 2016-09-16
+Last Modified: 2017-08-02
 
 Script for calculating the distances between 2 surfaces.
 
@@ -17,15 +17,17 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 _descStr = """Script for calculating the distances between 2 surfaces.
 Author: Ju Zhang
-Last Modified: 2016-09-16
+Last Modified: 2017-08-02
 
 This script takes 2 surfaces (groundtruth and test) and calculates the Jaccard
-index and the 2-way surface to surface distances. The 2-way distance means for
-each vertex on the groundtruth find the closest vertex on the test and then
-vice versa. Thus a total of m+n distances are calculated, where m and n are the
-number of vertices on the groundtruth and test surfaces respectively. The max,
-mean, and rms of these distances and the Jaccard index are printed to terminal
-or file.
+and dice indices, and the 2-way surface to surface distances. The 2-way
+distance means for each vertex on the groundtruth find the closest vertex on
+the test and then vice versa. Thus a total of m+n distances are calculated,
+where m and n are the number of vertices on the groundtruth and test surfaces
+respectively. The Hausdorff distance is also calculated.
+
+The max, mean, and rms of these distances and the Jaccard index are printed to
+terminal or file.
 
 Things to note
 --------------
@@ -42,15 +44,18 @@ Things to note
 - The results are printed to the terminal (and to file if the -o option is
   specified), e.g.:
 
-    dmax: 18.0328460848
-    dmean: 1.15626509502
-    drms: 1.69911836126
-    jaccard: 0.915674848409
+    dhausdorff: 0.719000284750812
+    dice: 0.9776663756442392
+    dmax: 0.789712039703775
+    dmean: 0.13066467628268588
+    drms: 0.17495242536528388
+    jaccard: 0.9563085399449036
+
 """
 
 from os import path
 import sys
-from scipy.spatial.distance import jaccard
+from scipy.spatial.distance import jaccard, dice, directed_hausdorff
 from scipy.spatial import cKDTree
 import numpy as np
 import argparse
@@ -62,7 +67,7 @@ from gias2.mesh import vtktools
 try:
     from gias2.visualisation import fieldvi
     can_visual = True
-except ImportError:
+except (ImportError, NotImplementedError):
     print('no visualisation available')
     can_visual = False
 
@@ -108,38 +113,6 @@ def dim_unit_scaling(in_unit, out_unit):
 
     return unit_vals[in_unit]/unit_vals[out_unit]
 
-def triSurface2BinaryMask(v, t, imageShape, voxelOrigin=None, voxelSpacing=None, bg=0):
-
-    imgDtype = np.int16
-    if voxelOrigin is None:
-        voxelOrigin = [0.0,0.0,0.0]
-    if voxelSpacing is None:
-        voxelSpacing = [1.0,1.0,1.0]
-
-    # make into vtkPolydata
-    gfPoly = vtktools.tri2Polydata(v, t)
-
-    # create mask vtkImage
-    maskImageArray = np.ones(imageShape, dtype=imgDtype)
-    maskVTKImage = vtktools.array2vtkImage(maskImageArray, imgDtype, flipDim=False)
-
-    # create stencil from polydata
-    stencilMaker = vtk.vtkPolyDataToImageStencil()
-    stencilMaker.SetInput(gfPoly)
-    stencilMaker.SetOutputOrigin(voxelOrigin)
-    stencilMaker.SetOutputSpacing(voxelSpacing)
-    stencilMaker.SetOutputWholeExtent(maskVTKImage.GetExtent())
-
-    stencil = vtk.vtkImageStencil()
-    stencil.SetInput(maskVTKImage)
-    stencil.SetStencil(stencilMaker.GetOutput())
-    stencil.SetBackgroundValue(bg)
-    stencil.ReverseStencilOff()
-    stencil.Update()
-
-    maskImageArray = vtktools.vtkImage2Array(stencil.GetOutput(), imgDtype, flipDim=True )
-    return maskImageArray, gfPoly
-
 def _rms(x):
     return np.sqrt((x*x).mean())
 
@@ -148,15 +121,16 @@ def loadMesh(filename):
     r.read(filename)
     return r.getSimplemesh()
 
-def calcJaccard(s1, s2, orig, shape, spacing):
-    I1 = triSurface2BinaryMask(
+def calcOverlap(s1, s2, orig, shape, spacing):
+    I1 = vtktools.triSurface2BinaryMask(
             s1.v, s1.f, shape, orig, spacing
             )[0].astype(int)
-    I2 = triSurface2BinaryMask(
+    I2 = vtktools.triSurface2BinaryMask(
             s2.v, s2.f, shape, orig, spacing
             )[0].astype(int)
     j = 1.0 - jaccard(I1.ravel(), I2.ravel())
-    return j, I1, I2
+    d = 1.0 - dice(I1.ravel(), I2.ravel())
+    return j, d, I1, I2
 
 def calcDistance(s1, s2):
     tree1 = cKDTree(s1.v)
@@ -164,6 +138,7 @@ def calcDistance(s1, s2):
     d21, d21i = tree1.query(s2.v,k=1)
     d12, d12i = tree2.query(s1.v,k=1)
 
+    dhaus = directed_hausdorff(s1.v, s2.v)[0]
     # dmax = max([max(d21), max(d12)])
     # drmsmean = np.mean([_rms(d21), _rms(d12)])
     # dmeanmean = np.mean([d21.mean(), d12.mean()])
@@ -172,7 +147,7 @@ def calcDistance(s1, s2):
     drms = _rms(np.hstack([d21, d12]))
     dmean = np.hstack([d21, d12]).mean()
 
-    return dmax, drms, dmean, (d12, d21)
+    return dmax, drms, dmean, dhaus, (d12, d21)
 
 def calcSegmentationErrors(meshFileTest, meshFileGT, jacImgSpacing, gtScaling, testScaling):
     # load ground truth segmentation (tri-mesh)
@@ -187,18 +162,20 @@ def calcSegmentationErrors(meshFileTest, meshFileGT, jacImgSpacing, gtScaling, t
     volMin = np.min([surfGT.v.min(0), surfTest.v.min(0)], axis=0)
     volMax = np.max([surfGT.v.max(0), surfTest.v.max(0)], axis=0)
     imgOrig = volMin-10.0
-    imgShape = np.ceil(((volMax+10.0)-imgOrig)/jacImgSpacing)
+    imgShape = np.ceil(((volMax+10.0)-imgOrig)/jacImgSpacing).astype(int)
 
     # calc jaccard coeff
-    j, imgGT, imgTest = calcJaccard(surfGT, surfTest, imgOrig, imgShape, jacImgSpacing)
+    jaccard_, dice_, imgGT, imgTest = calcOverlap(surfGT, surfTest, imgOrig, imgShape, jacImgSpacing)
 
     # calc surface to surface distance
-    dmax, drms, dmean, (d12, d21) = calcDistance(surfGT, surfTest)
+    dmax, drms, dmean, dhaus, (d12, d21) = calcDistance(surfGT, surfTest)
 
-    results = {'jaccard': j,
+    results = {'jaccard': jaccard_,
+               'dice': dice_,
                'dmax': dmax,
                'drms': drms,
                'dmean': dmean,
+               'dhausdorff': dhaus,
               }
 
     return results, surfTest, surfGT, imgTest, imgGT
@@ -212,7 +189,7 @@ def visualise(V, surfTest, surfGT, imgTest, imgGT):
         V.addImageVolume(imgTest.astype(float), 'test')
 
 def writeResults(filepath, testname, gtname, res):
-    text = 'groundtruth: {}, test: {}, rmsd: {:9.6f}, meand: {:9.6f}, maxd: {:9.6f}, jaccard{:9.6f}\n'
+    text = 'groundtruth: {}, test: {}, rmsd: {:9.6f}, meand: {:9.6f}, maxd: {:9.6f}, hausdorff: {:9.6f}, jaccard{:9.6f}, dice{:9.6f}\n'
     with open(filepath, 'a') as f:
         f.write(
             text.format(
@@ -221,40 +198,42 @@ def writeResults(filepath, testname, gtname, res):
                 res['drms'],
                 res['dmean'],
                 res['dmax'],
+                res['dhausdorff'],
                 res['jaccard'],
+                res['dice'],
                 )
             )
 
-#=============================================================================#
-imgSpacing = np.array([0.5,]*3, dtype=float)
-unitChoices = ('nm', 'um', 'mm', 'cm', 'm', 'km')
-defaultUnit = 'mm'
-#=============================================================================#
-parser = argparse.ArgumentParser(
-            description=_descStr,
-            formatter_class=RawTextHelpFormatter,
-            )
-parser.add_argument('gTruthPath',
-                    help='ground truth surface path')
-parser.add_argument('testPath',
-                    help='test surface path')
-parser.add_argument('-o', '--outpath',
-                    help='results output path. Results are append to text file')
-parser.add_argument('-d', '--display',
-                    action='store_true',
-                    help='visualise results')
-parser.add_argument('--groundtruth-unit',
-                    action='store',
-                    default='mm',
-                    choices=unitChoices,
-                    help='unit of ground truth coordinates')
-parser.add_argument('--test-unit',
-                    action='store',
-                    default='mm',
-                    choices=unitChoices,
-                    help='unit of test coordinates')
+def main():
+    #=============================================================================#
+    imgSpacing = np.array([0.5,]*3, dtype=float)
+    unitChoices = ('nm', 'um', 'mm', 'cm', 'm', 'km')
+    defaultUnit = 'mm'
+    #=============================================================================#
+    parser = argparse.ArgumentParser(
+                description=_descStr,
+                formatter_class=RawTextHelpFormatter,
+                )
+    parser.add_argument('gTruthPath',
+                        help='ground truth surface path')
+    parser.add_argument('testPath',
+                        help='test surface path')
+    parser.add_argument('-o', '--outpath',
+                        help='results output path. Results are append to text file')
+    parser.add_argument('-d', '--display',
+                        action='store_true',
+                        help='visualise results')
+    parser.add_argument('--groundtruth-unit',
+                        action='store',
+                        default='mm',
+                        choices=unitChoices,
+                        help='unit of ground truth coordinates')
+    parser.add_argument('--test-unit',
+                        action='store',
+                        default='mm',
+                        choices=unitChoices,
+                        help='unit of test coordinates')
 
-if __name__ == '__main__':
     args = parser.parse_args()
     gtUnitScaling = dim_unit_scaling(args.groundtruth_unit, defaultUnit)
     testUnitScaling = dim_unit_scaling(args.test_unit, defaultUnit)
@@ -265,8 +244,8 @@ if __name__ == '__main__':
                                     gtUnitScaling,
                                     testUnitScaling
                                     )
-    for k, v in results.items():
-        print '{}: {}'.format(k, v)
+    for k, v in sorted(results.items()):
+        print('{}: {}'.format(k, v))
 
     if args.outpath is not None:
         testName = path.splitext(path.split(args.testPath)[1])[0]
@@ -278,3 +257,6 @@ if __name__ == '__main__':
         V.configure_traits()
         V.scene.background=(0,0,0)
         visualise(V, surfTest, surfGT, imgTest, imgGT)
+
+if __name__ == '__main__':
+    main()
