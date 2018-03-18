@@ -111,11 +111,9 @@ centroids = inp_mesh.calcElemCentroids()
 # target_points_5 = s.coord2Index(target_tet.volElemCentroids)
 # target_points_5[:, 2] = -target_points_5[:, 2]
 sampled_hu = s.sampleImage(centroids, maptoindices=1, outputType=float, order=1, zShift=True, negSpacing=False)
-target_mat = sampled_hu
 
 #======================================================================#
 # write out INP file
-outputFilename = 'D:/users/xwan242/desktop/test_femur_4_matProps.inp'
 mesh = inp_mesh
 writer = inp.InpWriter(outputFilename)
 writer.addMesh(mesh)
