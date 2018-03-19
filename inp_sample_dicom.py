@@ -6,6 +6,9 @@ DESCRIPTION:
 Sample a DICOM stack at the element centroids of an INP mesh. From the sampled
 HU, calculate Young's modulus based on power law.
 
+run inp_sample_dicom.py ../../../dev/justin-mapping/Job-sheep_femur.inp ../../../dev/justin-mapping/ABI_sheep_CT/ ../../../dev/justin-mapping/Job-sheep_femur_mat.inp --dicompat "renamed_*" -v
+run inp_sample_dicom.py data/test_femur_4.inp data/dicom/ output/test_femur_4_mat.inp -v --flipz
+
 ===============================================================================
 This file is part of GIAS2. (https://bitbucket.org/jangle/gias2)
 
@@ -27,8 +30,27 @@ from gias2.image_analysis.image_tools import Scan
 from gias2.mesh import simplemesh
 from gias2.mesh import vtktools, inp, tetgenoutput
 
-E_BINS = np.linspace(0.1, 1e5, 10)[:-1]
-E_BIN_VALUES = E_BINS
+E_BINS = np.linspace(50, 1550, 16)  # in MPa
+E_BIN_VALUES = np.linspace(100, 1500, 15)  # in MPa
+E_BIN_VALUES = np.hstack([0, E_BIN_VALUES, 20000])  # add out of bound values
+
+# E_BINS = np.array([
+#     50, 150, 250, 350, 450, 550, 650, 750, 850, 950,
+#     1050, 1150, 1250, 1350, 1450, 1550,
+#     ])
+
+# E_BIN_VALUES = np.array([
+#     0, 100, 200, 300, 400, 500, 600, 700, 800,
+#     900, 1000, 1100, 1200, 1300, 1400, 1500, 20000
+#     ])
+
+ELSET_HEADER = '*Elset, elset=BONE{:03d}\n'
+ELEMS_PER_LINE = 16.0
+SECTION_HEADER = '**Section: Section-BONE{:03d}\n'
+SECTION_PAT = '*Solid Section, elset=BONE{:03d}, orientation=Ori-6, material=BONE{:03d}\n1.,\n'
+MATERIAL_HEADER = '*Material, name=BONE{:03d}\n'
+MATERIAL_PAT = '*Elastic\n {:.1f}, 0.3'
+
 
 parser = argparse.ArgumentParser(
     description='Sample a DICOM stack at the element centroids of an INP mesh.'
@@ -97,8 +119,8 @@ def bin_correct(x, bins, bin_values):
     inputs:
     -------
     x: 1D array of scalars
-    bins: a sequence of bin left edges.
-    bin_values: a sequence of values of length equal to the number of bins.
+    bins: a sequence of bin edges.
+    bin_values: a sequence of values of length equal to the number of bins+1.
         Values to reassign to each x depending on its bin.
 
     returns:
@@ -107,17 +129,18 @@ def bin_correct(x, bins, bin_values):
     bins: the indices of x grouped by bins
     """
 
-    if len(bins)!=len(bin_values):
-        raise ValueError('bins and bin_values must have same length')
+    if (len(bins)+1)!=len(bin_values):
+        raise ValueError('bin_values must have length len(bins)+1')
 
-    if x.min()<min(bins):
-        raise ValueError("lowest bin edge must be smaller or equal to x.min()")
+    # if x.min()<min(bins):
+    #     raise ValueError("lowest bin edge must be smaller or equal to x.min()")
 
     bin_inds = np.digitize(x, bins=bins, right=False)
     x_binned = np.zeros_like(x)
     bins = []
+
     for bi, bv in enumerate(bin_values):
-        bin_i_inds = np.where(bin_inds==bi+1)[0]
+        bin_i_inds = np.where(bin_inds==bi)[0]
         x_binned[bin_i_inds] = bv
         bins.append(bin_i_inds)
 
@@ -173,77 +196,54 @@ centroids_img = s.coord2Index(centroids, zShift=True, negSpacing=False, roundInt
 # target_points_5 = s.coord2Index(target_tet.volElemCentroids)
 # target_points_5[:, 2] = -target_points_5[:, 2]
 sampled_hu = s.sampleImage(
-    centroids_img, maptoindices=0, outputType=float, order=2,
+    centroids_img, maptoindices=0, outputType=float, order=1,
     )
 
 # Convert HU to Young's Modulus
 E = powerlaw(sampled_hu)
 
 # bin and correct E
-E_binned, E_bin_inds  = bin_correct(E, E_BINS, E_BIN_VALUES)
+E_binned, E_bin_inds = bin_correct(E, E_BINS, E_BIN_VALUES)
 
 
 # create a new INP "mesh" for each bin
 # binned_meshes = []
 # for bi, bin_inds in enumerate(E_bin_inds):
-#     m = inp.Mesh('BONE{:03d}'.format(bi+1))
+#     m = inp.Mesh('BONE{:03d}'.format(bi))
 #     m.setElems()
+
+
 #======================================================================#
-# # write out INP file
-# mesh = inp_mesh
-# writer = inp.InpWriter(outputFilename)
-# writer.addMesh(mesh)
-# writer.write()
+# write out INP file
+mesh = inp_mesh
+writer = inp.InpWriter(output_filename)
+writer.addMesh(mesh)
+writer.write()
 
-# # write out per-element material property
-# f = open(outputFilename, 'a')
+# write out per-element material property
+f = open(output_filename, 'a')
 
-# # write start of section
-# f.write('** extra\n')
-# line1_pattern = '*Elset, elset=ST{}\n'
-# line2_pattern = ' {}\n'
-# cnt=0
+# write elsets
+f.write('** Binned Elements\n')
+for bi, bin_inds in enumerate(E_bin_inds):
+    f.write(ELSET_HEADER.format(bi))
+    lines = np.array_split(bin_inds, int(np.ceil(len(bin_inds)/ELEMS_PER_LINE)))
+    for l in lines:
+        f.write(' '+', '.join([str(_l) for _l in l])+'\n')
 
-# for ei, e_number in enumerate(inp_mesh.elemNumbers):
-#     cnt += 1
-#     line1 = line1_pattern.format(cnt)
-#     line2 = line2_pattern.format(e_number)
-#     f.write(line1)
-#     f.write(line2)
-    
-# line1_pattern = '**Section: Section-{}\n'
-# line2_pattern = '*Solid Section, elset=ST{}, material=MT{}\n'
-# cnt2=0
+# write sections
+f.write('** Section Definitions\n')
+for bi, bin_inds in enumerate(E_bin_inds):
+    f.write(SECTION_HEADER.format(bi))
+    f.write(SECTION_PAT.format(bi, bi))
 
-# for ei, e_number in enumerate(mesh.elemNumbers):
-#     cnt2 += 1
-#     line1 = line1_pattern.format(cnt2)
-#     line2 = line2_pattern.format(cnt2,cnt2)
-#     f.write(line1)
-#     f.write(line2)
-    
-# # Right now, bright bone of the phantom on the DICOM has average HU value of 1073 HU and water on the DICOM has average HU value of -2
+# write materials
+f.write('** Material Definitions\n')
+for bi, bin_inds in enumerate(E_bin_inds):
+    f.write(MATERIAL_HEADER.format(bi))
+    f.write(MATERIAL_PAT.format(E_BIN_VALUES[bi]))
 
-
-
-# line1_pattern = '*Material, name=MT{}\n'
-# line2_pattern = '*Elastic\n'
-# line3_pattern = ' {}, {}\n'
-
-# cnt3=0
-
-# for ei, e_number in enumerate(mesh.elemNumbers):
-#     cnt3 += 1
-#     line1 = line1_pattern.format(cnt3)
-#     line2 = line2_pattern
-#     line3 = line3_pattern.format(Young[ei],0.3)
-#     f.write(line1)
-#     f.write(line2)
-#     f.write(line3)
-
-# f.close()
-
-# visualise = True
+f.close()
 
 #=============================================================#
 # view
@@ -251,7 +251,8 @@ if args.view:
     v = fieldvi.Fieldvi()
     #v.addImageVolume(s.I, 'CT', renderArgs={'vmax':2000, 'vmin':-200})
     v.addImageVolume(s.I, 'CT', renderArgs={'vmax':PHANTOM_HU, 'vmin':WATER_HU})
-    v.addData('centroids_img', centroids_img, scalar=E_binned, renderArgs={'mode':'point'})
+    v.addData('centroids_img', centroids_img, scalar=E, renderArgs={'mode':'point'})
+    # v.addData('centroids_img', centroids_img, scalar=E_binned, renderArgs={'mode':'point'})
     # v.addData('target points_inp', target_points_5[Young > np.min(Young)], scalar = Young[Young > np.min(Young)], renderArgs={'mode':'point', 'vmin':np.min(Young), 'vmax':np.max(Young), 'scale_mode':'none'})
     v.configure_traits()
     v.scene.background=(0,0,0)
