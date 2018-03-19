@@ -7,7 +7,7 @@ Sample a DICOM stack at the element centroids of an INP mesh. From the sampled
 HU, calculate Young's modulus based on power law.
 
 run inp_sample_dicom.py ../../../dev/justin-mapping/Job-sheep_femur.inp ../../../dev/justin-mapping/ABI_sheep_CT/ ../../../dev/justin-mapping/Job-sheep_femur_mat.inp --dicompat "renamed_*" -v
-run inp_sample_dicom.py data/test_femur_4.inp data/dicom/ output/test_femur_4_mat.inp -v --flipz
+run inp_sample_dicom.py data/test_femur_4.inp data/dicom/ outputs/test_femur_4_mat.inp -v --flipz
 
 ===============================================================================
 This file is part of GIAS2. (https://bitbucket.org/jangle/gias2)
@@ -31,8 +31,10 @@ from gias2.mesh import simplemesh
 from gias2.mesh import vtktools, inp, tetgenoutput
 
 E_BINS = np.linspace(50, 1550, 16)  # in MPa
-E_BIN_VALUES = np.linspace(100, 1500, 15)  # in MPa
-E_BIN_VALUES = np.hstack([0, E_BIN_VALUES, 20000])  # add out of bound values
+E_BIN_VALUES = np.hstack([0.1, np.linspace(100, 1500, 15), 20000])  # in MPa
+
+# E_BINS = np.linspace(50, 10050, 16)  # in MPa
+# E_BIN_VALUES = np.hstack([0.1, np.linspace(100, 10000, 15), 20000])  # in MPa
 
 # E_BINS = np.array([
 #     50, 150, 250, 350, 450, 550, 650, 750, 850, 950,
@@ -43,14 +45,6 @@ E_BIN_VALUES = np.hstack([0, E_BIN_VALUES, 20000])  # add out of bound values
 #     0, 100, 200, 300, 400, 500, 600, 700, 800,
 #     900, 1000, 1100, 1200, 1300, 1400, 1500, 20000
 #     ])
-
-ELSET_HEADER = '*Elset, elset=BONE{:03d}\n'
-ELEMS_PER_LINE = 16.0
-SECTION_HEADER = '**Section: Section-BONE{:03d}\n'
-SECTION_PAT = '*Solid Section, elset=BONE{:03d}, orientation=Ori-6, material=BONE{:03d}\n1.,\n'
-MATERIAL_HEADER = '*Material, name=BONE{:03d}\n'
-MATERIAL_PAT = '*Elastic\n {:.1f}, 0.3'
-
 
 parser = argparse.ArgumentParser(
     description='Sample a DICOM stack at the element centroids of an INP mesh.'
@@ -76,6 +70,11 @@ parser.add_argument(
     '-e', '--elset',
     default=None,
     help='The ELSET in the INP file to fit. If not given, the first ELSET will be used.'
+    )
+parser.add_argument(
+    '--flipx',
+    action='store_true',
+    help='Flip the X axis of the dicom stack'
     )
 parser.add_argument(
     '--flipz',
@@ -137,14 +136,16 @@ def bin_correct(x, bins, bin_values):
 
     bin_inds = np.digitize(x, bins=bins, right=False)
     x_binned = np.zeros_like(x)
+    x_bin_number = np.zeros_like(x)
     bins = []
 
     for bi, bv in enumerate(bin_values):
         bin_i_inds = np.where(bin_inds==bi)[0]
         x_binned[bin_i_inds] = bv
+        x_bin_number[bin_i_inds] = bi
         bins.append(bin_i_inds)
 
-    return x_binned, bins
+    return x_binned, x_bin_number, bins
 
 PHANTOM_HU = (19.960/(19.960 + 17.599))*1088 + (17.599/(17.599 + 19.960))*1055
 WATER_HU = -2
@@ -181,11 +182,14 @@ vol_nodes = np.array(vol_nodes)
 
 # load dicom
 s = Scan('scan')
+s._useCoord2IndexMat = True
 s.loadDicomFolder(
     dicomdir, filter=False, filePattern=args.dicompat, newLoadMethod=True
     )
 if args.flipz:
     s.I = s.I[:,:,::-1]
+if args.flipx:
+    s.I = s.I[::-1,:,:]
 
 # calculate element centroids
 centroids = inp_mesh.calcElemCentroids()
@@ -203,7 +207,7 @@ sampled_hu = s.sampleImage(
 E = powerlaw(sampled_hu)
 
 # bin and correct E
-E_binned, E_bin_inds = bin_correct(E, E_BINS, E_BIN_VALUES)
+E_binned, E_bin_number, E_bin_inds = bin_correct(E, E_BINS, E_BIN_VALUES)
 
 
 # create a new INP "mesh" for each bin
@@ -214,6 +218,13 @@ E_binned, E_bin_inds = bin_correct(E, E_BINS, E_BIN_VALUES)
 
 
 #======================================================================#
+ELSET_HEADER = '*Elset, elset=BONE{:03d}\n'
+ELEMS_PER_LINE = 16.0
+SECTION_HEADER = '**Section: Section-BONE{:03d}\n'
+SECTION_PAT = '*Solid Section, elset=BONE{:03d}, orientation=Ori-6, material=BONE{:03d}\n1.,\n'
+MATERIAL_HEADER = '*Material, name=BONE{:03d}\n'
+MATERIAL_PAT = '*Elastic\n {:.1f}, 0.3\n'
+
 # write out INP file
 mesh = inp_mesh
 writer = inp.InpWriter(output_filename)
@@ -229,7 +240,8 @@ for bi, bin_inds in enumerate(E_bin_inds):
     f.write(ELSET_HEADER.format(bi))
     lines = np.array_split(bin_inds, int(np.ceil(len(bin_inds)/ELEMS_PER_LINE)))
     for l in lines:
-        f.write(' '+', '.join([str(_l) for _l in l])+'\n')
+        line_elems = [str(inp_mesh.elemNumbers[_l]) for _l in l]
+        f.write(' '+', '.join(line_elems)+'\n')
 
 # write sections
 f.write('** Section Definitions\n')
@@ -251,8 +263,8 @@ if args.view:
     v = fieldvi.Fieldvi()
     #v.addImageVolume(s.I, 'CT', renderArgs={'vmax':2000, 'vmin':-200})
     v.addImageVolume(s.I, 'CT', renderArgs={'vmax':PHANTOM_HU, 'vmin':WATER_HU})
-    v.addData('centroids_img', centroids_img, scalar=E, renderArgs={'mode':'point'})
-    # v.addData('centroids_img', centroids_img, scalar=E_binned, renderArgs={'mode':'point'})
+    # v.addData('centroids_img', centroids_img, scalar=E, renderArgs={'mode':'point'})
+    v.addData('centroids_img', centroids_img, scalar=E_bin_number, renderArgs={'mode':'point'})
     # v.addData('target points_inp', target_points_5[Young > np.min(Young)], scalar = Young[Young > np.min(Young)], renderArgs={'mode':'point', 'vmin':np.min(Young), 'vmax':np.max(Young), 'scale_mode':'none'})
     v.configure_traits()
     v.scene.background=(0,0,0)
