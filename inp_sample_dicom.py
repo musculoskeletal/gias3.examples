@@ -22,6 +22,11 @@ import os
 import sys
 import argparse
 
+if sys.version_info.major==2:
+    import ConfigParser as configparser
+else:
+    import configparser
+
 os.environ['ETS_TOOLKIT'] = 'qt4'
 
 import numpy as np
@@ -32,6 +37,14 @@ from gias2.mesh import vtktools, inp, tetgenoutput
 
 E_BINS = np.linspace(50, 1550, 16)  # in MPa
 E_BIN_VALUES = np.hstack([0.1, np.linspace(100, 1500, 15), 20000])  # in MPa
+
+PHANTOM_HU = (19.960/(19.960 + 17.599))*1088 + (17.599/(17.599 + 19.960))*1055 # param
+WATER_HU = -2 # param
+RHO_PHANTOM = 800 # mg mm3^-1 param
+RHO_OTHER_MAT = 0.626*(2000000/2017.3)**(1/2.46) # param
+HA_APP = 0.626
+POWER_A = 2017.3/1000000 # param
+POWER_B = 2.46 # param
 
 # E_BINS = np.linspace(50, 10050, 16)  # in MPa
 # E_BIN_VALUES = np.hstack([0.1, np.linspace(100, 10000, 15), 20000])  # in MPa
@@ -49,23 +62,27 @@ E_BIN_VALUES = np.hstack([0.1, np.linspace(100, 1500, 15), 20000])  # in MPa
 parser = argparse.ArgumentParser(
     description='Sample a DICOM stack at the element centroids of an INP mesh.'
     )
+# parser.add_argument(
+#     'inp',
+#     help='INP file'
+#     )
+# parser.add_argument(
+#     'dicomdir',
+#     help='directory containing dicom stack'
+#     )
+# parser.add_argument(
+#     'output',
+#     help='output INP file'
+#     )
 parser.add_argument(
-    'inp',
-    help='INP file'
+    'config',
+    help='config file path.'
     )
-parser.add_argument(
-    'dicomdir',
-    help='directory containing dicom stack'
-    )
-parser.add_argument(
-    'output',
-    help='output INP file'
-    )
-parser.add_argument(
-    '--dicompat',
-    default='\.dcm',
-    help='file pattern of dicom files'
-    )
+# parser.add_argument(
+#     '--dicompat',
+#     default='\.dcm',
+#     help='file pattern of dicom files'
+#     )
 parser.add_argument(
     '-e', '--elset',
     default=None,
@@ -88,6 +105,35 @@ parser.add_argument(
     )
 
 #=============================================================================#
+class Params(object):
+    pass
+
+def parse_config(fname):
+    config = configparser.ConfigParser()
+    config.read(fname)
+
+    p = Params()
+    p.input_inp = config.get('filenames', 'input_inp')
+    p.dicom_dir = config.get('filenames', 'dicom_dir')
+    p.dicom_pattern = config.get('filenames', 'dicom_pattern')
+    p.output_inp = config.get('filenames', 'output_inp')
+
+    p.E_bins = np.array([float(x) for x in config.get('bins', 'E_bins').split(',')])
+    E_bin_values = p.E_bins[:-1]+0.5*(p.E_bins[1:] - p.E_bins[:-1])
+    E_min = config.getfloat('bins', 'E_min')
+    E_max = config.getfloat('bins', 'E_max')
+    p.E_bin_values = np.hstack([E_min, E_bin_values, E_max])
+
+    p.phantom_hu = config.getfloat('power', 'phantom_hu')
+    p.water_hu = config.getfloat('power', 'water_hu')
+    p.phantom_rho = config.getfloat('power', 'phantom_rho')
+    p.other_mat_rho = config.getfloat('power', 'other_mat_rho')
+    p.ha_app = config.getfloat('power', 'ha_app')
+    p.A = config.getfloat('power', 'A')
+    p.B = config.getfloat('power', 'B')
+
+    return p
+
 def _load_inp(fname, meshname=None):
     """
     Reads mesh meshname from INP file. If meshname not defined, reads the 1st mesh.
@@ -147,44 +193,43 @@ def bin_correct(x, bins, bin_values):
 
     return x_binned, x_bin_number, bins
 
-PHANTOM_HU = (19.960/(19.960 + 17.599))*1088 + (17.599/(17.599 + 19.960))*1055
-WATER_HU = -2
-UPPER_E = 16700 # in MPa. From Jacob Munro's material properties document.
-RHO_PHANTOM = 800 # mg mm3^-1
-RHO_OTHER_MAT = 0.626*(2000000/2017.3)**(1/2.46)
-
-def powerlaw(hu):
+def powerlaw(hu, p):
     """
     Calculate youngs modulus from HU using power law
     """
 
     # Fix very low density values to a 2MPa value
-    rho_HA = (hu - WATER_HU)*RHO_PHANTOM/(PHANTOM_HU - WATER_HU)
-    rho_HA[rho_HA < RHO_OTHER_MAT] = RHO_OTHER_MAT
-    rho_app = rho_HA/0.626
+    rho_HA = (hu - p.water_hu)*p.phantom_rho/(p.phantom_hu - p.water_hu)
+    rho_HA[rho_HA < p.other_mat_rho] = p.other_mat_rho
+    rho_app = rho_HA/p.ha_app
 
-    Young = 2017.3*(rho_app**2.46)/1000000 # factor of 1000000 is to convert pascals into megapascals
+    Young = p.A*(rho_app**p.B) # factor of 1000000 is to convert pascals into megapascals
 
     return Young
 
 #=============================================================================#
 # parse inputs
 args = parser.parse_args()
+params = parse_config(args.config)
 
-inp_filename = args.inp #'data/tibia_volume.inp'
-dicomdir = args.dicomdir #'data/tibia_surface.stl'
-output_filename = args.output #'data/tibia_morphed.stl'
+
+# inp_filename = args.inp #'data/tibia_volume.inp'
+# dicomdir = args.dicomdir #'data/tibia_surface.stl'
+# output_filename = args.output #'data/tibia_morphed.stl'
 
 # import volumetric mesh
-inp_mesh, inp_header = _load_inp(inp_filename, args.elset)
+inp_mesh, inp_header = _load_inp(params.input_inp, args.elset)
 vol_nodes = inp_mesh.getNodes()
 vol_nodes = np.array(vol_nodes)
+
+# load surface elems
+# TODO
 
 # load dicom
 s = Scan('scan')
 s._useCoord2IndexMat = True
 s.loadDicomFolder(
-    dicomdir, filter=False, filePattern=args.dicompat, newLoadMethod=True
+    params.dicom_dir, filter=False, filePattern=params.dicom_pattern, newLoadMethod=True
     )
 if args.flipz:
     s.I = s.I[:,:,::-1]
@@ -204,10 +249,10 @@ sampled_hu = s.sampleImage(
     )
 
 # Convert HU to Young's Modulus
-E = powerlaw(sampled_hu)
+E = powerlaw(sampled_hu, params)
 
 # bin and correct E
-E_binned, E_bin_number, E_bin_inds = bin_correct(E, E_BINS, E_BIN_VALUES)
+E_binned, E_bin_number, E_bin_inds = bin_correct(E, params.E_bins, params.E_bin_values)
 
 
 # create a new INP "mesh" for each bin
@@ -227,12 +272,12 @@ MATERIAL_PAT = '*Elastic\n {:.1f}, 0.3\n'
 
 # write out INP file
 mesh = inp_mesh
-writer = inp.InpWriter(output_filename)
+writer = inp.InpWriter(params.output_inp)
 writer.addMesh(mesh)
 writer.write()
 
 # write out per-element material property
-f = open(output_filename, 'a')
+f = open(params.output_inp, 'a')
 
 # write elsets
 f.write('** Binned Elements\n')
