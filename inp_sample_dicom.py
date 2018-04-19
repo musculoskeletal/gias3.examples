@@ -30,7 +30,6 @@ else:
 os.environ['ETS_TOOLKIT'] = 'qt4'
 
 import numpy as np
-from gias2.visualisation import fieldvi
 from gias2.image_analysis.image_tools import Scan
 from gias2.mesh import simplemesh
 from gias2.mesh import vtktools, inp, tetgenoutput
@@ -190,109 +189,121 @@ def powerlaw(hu, p):
 
     return Young
 
-#=============================================================================#
-# parse inputs
-args = parser.parse_args()
-params = parse_config(args.config)
+def main():
+    #=============================================================================#
+    # parse inputs
+    args = parser.parse_args()
+    params = parse_config(args.config)
 
-# import volumetric mesh
-inp_reader = inp.InpReader(params.input_inp)
-inp_header = inp_reader.readHeader()
-inp_mesh = inp_reader.readMesh(params.input_elset)
+    # import volumetric mesh
+    inp_reader = inp.InpReader(params.input_inp)
+    inp_header = inp_reader.readHeader()
+    inp_mesh = inp_reader.readMesh(params.input_elset)
 
-# load surface elems
-inp_surf_elems = inp_reader.readElset(params.input_surf_elset)
-inp_surf_elems_inds = [inp_mesh.elemNumbers.index(i) for i in inp_surf_elems]
+    # load surface elems
+    inp_surf_elems = inp_reader.readElset(params.input_surf_elset)
+    inp_surf_elems_inds = [inp_mesh.elemNumbers.index(i) for i in inp_surf_elems]
 
-# load dicom
-s = Scan('scan')
-s._useCoord2IndexMat = True
-s.loadDicomFolder(
-    params.dicom_dir, filter=False, filePattern=params.dicom_pattern, newLoadMethod=True
-    )
-if args.flipz:
-    s.I = s.I[:,:,::-1]
-if args.flipx:
-    s.I = s.I[::-1,:,:]
+    # load dicom
+    s = Scan('scan')
+    s._useCoord2IndexMat = True
+    s.loadDicomFolder(
+        params.dicom_dir, filter=False, filePattern=params.dicom_pattern, newLoadMethod=True
+        )
+    if args.flipz:
+        s.I = s.I[:,:,::-1]
+    if args.flipx:
+        s.I = s.I[::-1,:,:]
 
-# calculate element centroids
-centroids = inp_mesh.calcElemCentroids()
-centroids_img = s.coord2Index(centroids, zShift=True, negSpacing=False, roundInt=False)
-centroids_img += [-1,-1,0]
+    # calculate element centroids
+    centroids = inp_mesh.calcElemCentroids()
+    centroids_img = s.coord2Index(centroids, zShift=True, negSpacing=False, roundInt=False)
+    centroids_img += [-1,-1,0]
 
-# sample image at element centroids - use linear interpolation
-sampled_hu = s.sampleImage(
-    centroids_img, maptoindices=0, outputType=float, order=1,
-    )
+    # sample image at element centroids - use linear interpolation
+    sampled_hu = s.sampleImage(
+        centroids_img, maptoindices=0, outputType=float, order=1,
+        )
 
-# Convert HU to Young's Modulus
-E = powerlaw(sampled_hu, params)
+    # Convert HU to Young's Modulus
+    E = powerlaw(sampled_hu, params)
 
-# bin and correct E
-E_binned, E_bin_number, E_bin_inds = bin_correct(E, params.E_bins, params.E_bin_values, inp_surf_elems_inds)
+    # bin and correct E
+    E_binned, E_bin_number, E_bin_inds = bin_correct(E, params.E_bins, params.E_bin_values, inp_surf_elems_inds)
 
-binned_elsets = []
-for bi, bin_inds in enumerate(E_bin_inds):
-    binned_elsets.append([inp_mesh.elemNumbers[i] for i in bin_inds])
+    binned_elsets = []
+    for bi, bin_inds in enumerate(E_bin_inds):
+        binned_elsets.append([inp_mesh.elemNumbers[i] for i in bin_inds])
 
-# create a new INP "mesh" for each bin
-# binned_meshes = []
-# for bi, bin_inds in enumerate(E_bin_inds):
-#     m = inp.Mesh('BONE{:03d}'.format(bi))
-#     m.setElems()
-
-
-#======================================================================#
-ELSET_HEADER = '*Elset, elset=BONE{:03d}\n'
-ELEMS_PER_LINE = 16.0
-SECTION_HEADER = '**Section: Section-BONE{:03d}\n'
-SECTION_PAT = '*Solid Section, elset=BONE{:03d}, orientation=Ori-6, material=BONE{:03d}\n1.,\n'
-MATERIAL_HEADER = '*Material, name=BONE{:03d}\n'
-MATERIAL_PAT = '*Elastic\n {:.1f}, 0.3\n'
-
-# write out INP file
-mesh = inp_mesh
-writer = inp.InpWriter(params.output_inp)
-writer.addMesh(mesh)
-writer.write()
-
-# write out per-element material property
-f = open(params.output_inp, 'a')
-
-# write elsets
-f.write('** Binned Elements\n')
-for bi, bin_elset in enumerate(binned_elsets):
-    f.write(ELSET_HEADER.format(bi))
-    lines = np.array_split(bin_elset, int(np.ceil(len(bin_elset)/ELEMS_PER_LINE)))
-    for l in lines:
-        line_strs = [str(_l) for _l in l]
-        f.write(' '+', '.join(line_strs)+'\n')
-
-# write sections
-f.write('** Section Definitions\n')
-for bi, bin_inds in enumerate(E_bin_inds):
-    f.write(SECTION_HEADER.format(bi))
-    f.write(SECTION_PAT.format(bi, bi))
-
-# write materials
-f.write('** Material Definitions\n')
-for bi, bin_inds in enumerate(E_bin_inds):
-    f.write(MATERIAL_HEADER.format(bi))
-    f.write(MATERIAL_PAT.format(params.E_bin_values[bi]))
-
-f.close()
-
-#=============================================================#
-# view
-if args.view:
-    v = fieldvi.Fieldvi()
-    #v.addImageVolume(s.I, 'CT', renderArgs={'vmax':2000, 'vmin':-200})
-    v.addImageVolume(s.I, 'CT', renderArgs={'vmax':params.phantom_hu, 'vmin':params.water_hu})
-    # v.addData('centroids_img', centroids_img, scalar=E, renderArgs={'mode':'point'})
-    v.addData('centroids_img', centroids_img, scalar=E_bin_number, renderArgs={'mode':'point'})
-    v.addData('centroids_surf_img', centroids_img[inp_surf_elems_inds], renderArgs={'mode':'point', 'color':(1,1,1)})
-    # v.addData('target points_inp', target_points_5[Young > np.min(Young)], scalar = Young[Young > np.min(Young)], renderArgs={'mode':'point', 'vmin':np.min(Young), 'vmax':np.max(Young), 'scale_mode':'none'})
-    v.configure_traits()
-    v.scene.background=(0,0,0)
+    # create a new INP "mesh" for each bin
+    # binned_meshes = []
+    # for bi, bin_inds in enumerate(E_bin_inds):
+    #     m = inp.Mesh('BONE{:03d}'.format(bi))
+    #     m.setElems()
 
 
+    #======================================================================#
+    ELSET_HEADER = '*Elset, elset=BONE{:03d}\n'
+    ELEMS_PER_LINE = 16.0
+    SECTION_HEADER = '**Section: Section-BONE{:03d}\n'
+    SECTION_PAT = '*Solid Section, elset=BONE{:03d}, orientation=Ori-6, material=BONE{:03d}\n1.,\n'
+    MATERIAL_HEADER = '*Material, name=BONE{:03d}\n'
+    MATERIAL_PAT = '*Elastic\n {:.1f}, 0.3\n'
+
+    # write out INP file
+    mesh = inp_mesh
+    writer = inp.InpWriter(params.output_inp)
+    writer.addMesh(mesh)
+    writer.write()
+
+    # write out per-element material property
+    f = open(params.output_inp, 'a')
+
+    # write elsets
+    f.write('** Binned Elements\n')
+    for bi, bin_elset in enumerate(binned_elsets):
+        f.write(ELSET_HEADER.format(bi))
+        lines = np.array_split(bin_elset, int(np.ceil(len(bin_elset)/ELEMS_PER_LINE)))
+        for l in lines:
+            line_strs = [str(_l) for _l in l]
+            f.write(' '+', '.join(line_strs)+'\n')
+
+    # write sections
+    f.write('** Section Definitions\n')
+    for bi, bin_inds in enumerate(E_bin_inds):
+        f.write(SECTION_HEADER.format(bi))
+        f.write(SECTION_PAT.format(bi, bi))
+
+    # write materials
+    f.write('** Material Definitions\n')
+    for bi, bin_inds in enumerate(E_bin_inds):
+        f.write(MATERIAL_HEADER.format(bi))
+        f.write(MATERIAL_PAT.format(params.E_bin_values[bi]))
+
+    f.close()
+
+    #=============================================================#
+    # view
+    if args.view:
+        os.environ['ETS_TOOLKIT'] = 'qt4'
+        try:
+            from gias2.visualisation import fieldvi
+            has_mayavi = True
+        except ImportError:
+            has_mayavi = False
+
+        if has_mayavi:
+            v = fieldvi.Fieldvi()
+            #v.addImageVolume(s.I, 'CT', renderArgs={'vmax':2000, 'vmin':-200})
+            v.addImageVolume(s.I, 'CT', renderArgs={'vmax':params.phantom_hu, 'vmin':params.water_hu})
+            # v.addData('centroids_img', centroids_img, scalar=E, renderArgs={'mode':'point'})
+            v.addData('centroids_img', centroids_img, scalar=E_bin_number, renderArgs={'mode':'point'})
+            v.addData('centroids_surf_img', centroids_img[inp_surf_elems_inds], renderArgs={'mode':'point', 'color':(1,1,1)})
+            # v.addData('target points_inp', target_points_5[Young > np.min(Young)], scalar = Young[Young > np.min(Young)], renderArgs={'mode':'point', 'vmin':np.min(Young), 'vmax':np.max(Young), 'scale_mode':'none'})
+            v.configure_traits()
+            v.scene.background=(0,0,0)
+        else:
+            print('Visualisation error: cannot import mayavi')
+
+if __name__ == '__main__':
+    main()
