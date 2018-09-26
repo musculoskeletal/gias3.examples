@@ -25,6 +25,7 @@ import itertools
 import copy
 from scipy.optimize import leastsq
 from scipy.spatial import cKDTree
+
 from gias2.fieldwork.field.tools import fitting_tools
 from gias2.fieldwork.field import geometric_field_fitter as GFF
 from gias2.fieldwork.field import geometric_field
@@ -36,7 +37,7 @@ from gias2.registration import alignment_fitting as af
 """
 Test INP reading and writing
 """
-from gias.common import inp
+
 
 def calcElemCentroids(mesh):
     nodemapping = dict(zip(mesh.nodeNumbers, mesh.nodes))
@@ -80,8 +81,6 @@ init_rot = [np.pi, 0, np.pi]
 #target_mesh_file = 'meshes/target/2008_2571_pelvis_coarse'
 #target_tet, target_sm = load_tet(target_mesh_file)
 #target_surf_points = target_tet.getSurfaceNodes()[1]
-
-reload(inp)
 
 inputFilename = 'data/hmf_map_inp/IlliumLTet.inp'
 outputFilename = 'data/hmf_map_inp/output/IlliumLTet_out.inp'
