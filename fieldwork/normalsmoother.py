@@ -67,6 +67,7 @@ def obj(V1, V2):
 
 
 def vector2DPlot():
+    from matplotlib import pyplot as plot
     angles = scipy.linspace(0.0, 360.0, 20) * scipy.pi / 180
     X = []
     for a in angles:
