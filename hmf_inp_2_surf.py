@@ -33,9 +33,8 @@ Created by: Ju Zhang
 Last Modified: 17-03-2018
 """
 
-import os
-import sys
 import argparse
+import os
 
 os.environ['ETS_TOOLKIT'] = 'qt4'
 
@@ -51,43 +50,44 @@ from gias2.registration import alignment_fitting as af
 
 parser = argparse.ArgumentParser(
     description='host-mesh fit an INP mesh to a surface'
-    )
+)
 parser.add_argument(
     'source_volume',
     help='source INP file to be fitted'
-    )
+)
 parser.add_argument(
     'source_surf',
     help='surface model file of the source INP file to be fitted'
-    )
+)
 parser.add_argument(
     'target_surf',
     help='target surface model file to be fitted to'
-    )
+)
 parser.add_argument(
     'output',
     help='output INP file of the fitted mesh'
-    )
+)
 parser.add_argument(
     '-e', '--elset',
     default=None,
     help='The ELSET in the INP file to fit. If not given, the first ELSET will be used.'
-    )
+)
 parser.add_argument(
     '-r', '--rotate',
-    nargs=3, type=float, default=[0,0,0],
+    nargs=3, type=float, default=[0, 0, 0],
     help='Initial Eulerian rotations to apply to the source surface to align it with the target surface. In degrees.'
-    )
+)
 parser.add_argument(
     '--orig-position',
     action='store_true',
     help='Return fitted source mesh to original source position'
-    )
+)
 parser.add_argument(
     '-v', '--view',
     action='store_true',
     help='view results in mayavi'
-    )
+)
+
 
 def _load_inp(fname, meshname=None):
     """
@@ -102,28 +102,29 @@ def _load_inp(fname, meshname=None):
 
     return reader.readMesh(meshname), header
 
+
 def main():
-    #=============================================================================#
+    # =============================================================================#
     # input arguments
     args = parser.parse_args()
 
     # initial rotation to apply to the source model for rigid-body registration
     # before host mesh fitting. Euler rotations are applied in order of Z, Y, X
-    init_rot = np.deg2rad(args.rotate).tolist() #[-np.pi/2, 0, 0]
+    init_rot = np.deg2rad(args.rotate).tolist()  # [-np.pi/2, 0, 0]
 
-    sourceFilename = args.source_volume #'data/tibia_volume.inp'
-    sourceSurfFilename = args.source_surf #'data/tibia_surface.stl'
-    targetFilename = args.target_surf #'data/tibia_morphed.stl'
-    outputFilename = args.output #'data/tibia_volume_morphed.inp'
+    sourceFilename = args.source_volume  # 'data/tibia_volume.inp'
+    sourceSurfFilename = args.source_surf  # 'data/tibia_surface.stl'
+    targetFilename = args.target_surf  # 'data/tibia_morphed.stl'
+    outputFilename = args.output  # 'data/tibia_volume_morphed.inp'
 
     # fititng parameters for host mesh fitting
-    host_mesh_pad = 5.0 # host mesh padding around slave points
-    host_elem_type = 'quad444' # quadrilateral cubic host elements
-    host_elems = [1,1,1] # number of host elements in the x, y, and z directions
+    host_mesh_pad = 5.0  # host mesh padding around slave points
+    host_elem_type = 'quad444'  # quadrilateral cubic host elements
+    host_elems = [1, 1, 1]  # number of host elements in the x, y, and z directions
     maxit = 20
-    sobd = [4,4,4]
-    sobw = 1e-8 # host mesh smoothing weight
-    xtol = 1e-6 # convergence error
+    sobd = [4, 4, 4]
+    sobw = 1e-8  # host mesh smoothing weight
+    xtol = 1e-6  # convergence error
 
     source_mesh, source_header = _load_inp(sourceFilename, args.elset)
     source_surf = vtktools.loadpoly(sourceSurfFilename)
@@ -132,37 +133,37 @@ def main():
     source_surf_points = source_surf.v
     target_surf_points = target_surf.v
 
-    #=============================================================#
+    # =============================================================#
     # rigidly register source surf points to target surf points
     init_trans = (target_surf_points.mean(0) - source_surf_points.mean(0)).tolist()
     reg1_T, source_surf_points_reg1, reg1_errors = af.fitDataRigidDPEP(
-                                                    source_surf_points,
-                                                    target_surf_points,
-                                                    xtol=1e-6,
-                                                    sample=1000,
-                                                    t0=np.array(init_trans+init_rot),
-                                                    outputErrors=1
-                                                    )
+        source_surf_points,
+        target_surf_points,
+        xtol=1e-6,
+        sample=1000,
+        t0=np.array(init_trans + init_rot),
+        outputErrors=1
+    )
     print('rigid-body registration error: {}'.format(reg1_errors[1]))
     # add isotropic scaling to rigid registration
     reg2_T, source_surf_points_reg2, reg2_errors = af.fitDataRigidScaleDPEP(
-                                                    source_surf_points,
-                                                    target_surf_points,
-                                                    xtol=1e-6,
-                                                    sample=1000,
-                                                    t0=np.hstack([reg1_T, 1.0]),
-                                                    outputErrors=1
-                                                    )
+        source_surf_points,
+        target_surf_points,
+        xtol=1e-6,
+        sample=1000,
+        t0=np.hstack([reg1_T, 1.0]),
+        outputErrors=1
+    )
     print('rigid-body + scaling registration error: {}'.format(reg2_errors[1]))
 
     # apply same transforms to the volume nodes
     source_mesh.nodes = transform3D.transformRigidScale3DAboutP(
-                        source_mesh.nodes,
-                        reg2_T,
-                        source_surf_points.mean(0)
-                        )
+        source_mesh.nodes,
+        reg2_T,
+        source_surf_points.mean(0)
+    )
 
-    #=============================================================#
+    # =============================================================#
     # host mesh fit source surface to target surface and
     # apply HMF transform to all source nodes
 
@@ -197,37 +198,37 @@ def main():
 
     # make host mesh
     host_mesh = GFF.makeHostMeshMulti(
-                source_surf_points_reg2.T,
-                host_mesh_pad,
-                host_elem_type,
-                host_elems,
-                )
+        source_surf_points_reg2.T,
+        host_mesh_pad,
+        host_elem_type,
+        host_elems,
+    )
 
     # calculate the embedding (xi) coordinates of internal
     # source nodes. Internal source nodes are not involved in the
     # fititng, but will be deformed by the host mesh
     source_nodes_xi = host_mesh.find_closest_material_points(
-                                source_mesh.nodes,
-                                initGD=[100,100,100],
-                                verbose=True,
-                                )[0]
+        source_mesh.nodes,
+        initGD=[100, 100, 100],
+        verbose=True,
+    )[0]
     # make internal source node coordinate evaluator function
     eval_source_nodes_xi = geometric_field.makeGeometricFieldEvaluatorSparse(
-                                host_mesh, [1,1], matPoints=source_nodes_xi
-                                )
+        host_mesh, [1, 1], matPoints=source_nodes_xi
+    )
 
     # HMF
-    host_x_opt, source_surf_points_hmf,\
+    host_x_opt, source_surf_points_hmf, \
     slave_xi, rmse_hmf = fitting_tools.hostMeshFitPoints(
-                            host_mesh,
-                            source_surf_points_reg2,
-                            slave_func,
-                            max_it=maxit,
-                            sob_d=sobd,
-                            sob_w=sobw,
-                            verbose=True,
-                            xtol=xtol
-                            )
+        host_mesh,
+        source_surf_points_reg2,
+        slave_func,
+        max_it=maxit,
+        sob_d=sobd,
+        sob_w=sobw,
+        verbose=True,
+        xtol=xtol
+    )
     # evaluate the new positions of the source nodes
     source_mesh.nodes = eval_source_nodes_xi(host_x_opt).T
 
@@ -235,31 +236,32 @@ def main():
     if args.orig_position:
         reg_inv_T, source_surf_points_hmf_2 = af.fitRigid(
             source_surf_points_hmf, source_surf_points
-            )
+        )
         source_mesh.nodes = transform3D.transformRigid3DAboutP(
             source_mesh.nodes, reg_inv_T, source_surf_points_hmf.mean(0)
-            )
+        )
 
-    #=============================================================#
+    # =============================================================#
     # view
     if args.view:
         v = fieldvi.Fieldvi()
-        v.addData('target surface', target_surf_points, renderArgs={'mode':'point', 'color':(1,0,0)})
-        v.addData('source surface', source_surf_points, renderArgs={'mode':'point'})
-        v.addData('source surface reg1', source_surf_points_reg1, renderArgs={'mode':'point'})
-        v.addData('source surface reg2', source_surf_points_reg2, renderArgs={'mode':'point'})
-        v.addData('source surface hmf', source_surf_points_hmf, renderArgs={'mode':'point'})
-        v.addData('source nodes hmf', source_mesh.nodes, renderArgs={'mode':'point'})
+        v.addData('target surface', target_surf_points, renderArgs={'mode': 'point', 'color': (1, 0, 0)})
+        v.addData('source surface', source_surf_points, renderArgs={'mode': 'point'})
+        v.addData('source surface reg1', source_surf_points_reg1, renderArgs={'mode': 'point'})
+        v.addData('source surface reg2', source_surf_points_reg2, renderArgs={'mode': 'point'})
+        v.addData('source surface hmf', source_surf_points_hmf, renderArgs={'mode': 'point'})
+        v.addData('source nodes hmf', source_mesh.nodes, renderArgs={'mode': 'point'})
 
         v.configure_traits()
-        v.scene.background=(0,0,0)
+        v.scene.background = (0, 0, 0)
 
-    #======================================================================#
+    # ======================================================================#
     # write out INP file
     writer = inp.InpWriter(outputFilename)
     writer.addHeader('hmf model')
     writer.addMesh(source_mesh)
     writer.write()
+
 
 if __name__ == '__main__':
     main()

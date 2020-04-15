@@ -53,23 +53,24 @@ Things to note
 
 """
 
-from os import path
-import sys
-from scipy.spatial.distance import jaccard, dice, directed_hausdorff
-from scipy.spatial import cKDTree
-import numpy as np
 import argparse
 from argparse import RawTextHelpFormatter
-import vtk
+from os import path
+
+import numpy as np
+from scipy.spatial import cKDTree
+from scipy.spatial.distance import jaccard, dice, directed_hausdorff
 
 from gias2.mesh import vtktools
 
 try:
     from gias2.visualisation import fieldvi
+
     can_visual = True
 except (ImportError, NotImplementedError):
     print('no visualisation available')
     can_visual = False
+
 
 def dim_unit_scaling(in_unit, out_unit):
     """
@@ -94,49 +95,53 @@ def dim_unit_scaling(in_unit, out_unit):
         'um': 1e-6,
         'mm': 1e-3,
         'cm': 1e-2,
-        'm':  1.0,
+        'm': 1.0,
         'km': 1e3,
-        }
+    }
 
     if in_unit not in unit_vals:
         raise ValueError(
             'Invalid input unit {}. Must be one of {}'.format(
                 in_unit, list(unit_vals.keys())
-                )
             )
+        )
     if out_unit not in unit_vals:
         raise ValueError(
             'Invalid input unit {}. Must be one of {}'.format(
                 in_unit, list(unit_vals.keys())
-                )
             )
+        )
 
-    return unit_vals[in_unit]/unit_vals[out_unit]
+    return unit_vals[in_unit] / unit_vals[out_unit]
+
 
 def _rms(x):
-    return np.sqrt((x*x).mean())
+    return np.sqrt((x * x).mean())
+
 
 def loadMesh(filename):
     r = vtktools.Reader()
     r.read(filename)
     return r.getSimplemesh()
 
+
 def calcOverlap(s1, s2, orig, shape, spacing):
     I1 = vtktools.triSurface2BinaryMask(
-            s1.v, s1.f, shape, orig, spacing
-            )[0].astype(int)
+        s1.v, s1.f, shape, orig, spacing
+    )[0].astype(int)
     I2 = vtktools.triSurface2BinaryMask(
-            s2.v, s2.f, shape, orig, spacing
-            )[0].astype(int)
+        s2.v, s2.f, shape, orig, spacing
+    )[0].astype(int)
     j = 1.0 - jaccard(I1.ravel(), I2.ravel())
     d = 1.0 - dice(I1.ravel(), I2.ravel())
     return j, d, I1, I2
 
+
 def calcDistance(s1, s2):
     tree1 = cKDTree(s1.v)
     tree2 = cKDTree(s2.v)
-    d21, d21i = tree1.query(s2.v,k=1)
-    d12, d12i = tree2.query(s1.v,k=1)
+    d21, d21i = tree1.query(s2.v, k=1)
+    d12, d12i = tree2.query(s1.v, k=1)
 
     dhaus = directed_hausdorff(s1.v, s2.v)[0]
     # dmax = max([max(d21), max(d12)])
@@ -149,20 +154,21 @@ def calcDistance(s1, s2):
 
     return dmax, drms, dmean, dhaus, (d12, d21)
 
+
 def calcSegmentationErrors(meshFileTest, meshFileGT, jacImgSpacing, gtScaling, testScaling):
     # load ground truth segmentation (tri-mesh)
     surfGT = loadMesh(meshFileGT)
-    surfGT.v*=gtScaling
+    surfGT.v *= gtScaling
 
     # load test segmentation (tri-mesh)
     surfTest = loadMesh(meshFileTest)
-    surfTest.v*=testScaling
+    surfTest.v *= testScaling
 
     # work out volume size
     volMin = np.min([surfGT.v.min(0), surfTest.v.min(0)], axis=0)
     volMax = np.max([surfGT.v.max(0), surfTest.v.max(0)], axis=0)
-    imgOrig = volMin-10.0
-    imgShape = np.ceil(((volMax+10.0)-imgOrig)/jacImgSpacing).astype(int)
+    imgOrig = volMin - 10.0
+    imgShape = np.ceil(((volMax + 10.0) - imgOrig) / jacImgSpacing).astype(int)
 
     # calc jaccard coeff
     jaccard_, dice_, imgGT, imgTest = calcOverlap(surfGT, surfTest, imgOrig, imgShape, jacImgSpacing)
@@ -176,17 +182,19 @@ def calcSegmentationErrors(meshFileTest, meshFileGT, jacImgSpacing, gtScaling, t
                'drms': drms,
                'dmean': dmean,
                'dhausdorff': dhaus,
-              }
+               }
 
     return results, surfTest, surfGT, imgTest, imgGT
 
+
 def visualise(V, surfTest, surfGT, imgTest, imgGT):
-        V.addTri('test surface', surfTest, renderArgs={'color':(0.4,0.4,0.4)})
-        V.updateTriSurface('test surface')
-        V.addTri('ground truth surface', surfGT, renderArgs={'color':(0.84705882, 0.8, 0.49803922)})
-        V.updateTriSurface('ground truth surface')
-        V.addImageVolume(imgGT.astype(float), 'groundtruth')
-        V.addImageVolume(imgTest.astype(float), 'test')
+    V.addTri('test surface', surfTest, renderArgs={'color': (0.4, 0.4, 0.4)})
+    V.updateTriSurface('test surface')
+    V.addTri('ground truth surface', surfGT, renderArgs={'color': (0.84705882, 0.8, 0.49803922)})
+    V.updateTriSurface('ground truth surface')
+    V.addImageVolume(imgGT.astype(float), 'groundtruth')
+    V.addImageVolume(imgTest.astype(float), 'test')
+
 
 def writeResults(filepath, testname, gtname, res):
     text = 'groundtruth: {}, test: {}, rmsd: {:9.6f}, meand: {:9.6f}, maxd: {:9.6f}, hausdorff: {:9.6f}, jaccard{:9.6f}, dice{:9.6f}\n'
@@ -201,19 +209,20 @@ def writeResults(filepath, testname, gtname, res):
                 res['dhausdorff'],
                 res['jaccard'],
                 res['dice'],
-                )
             )
+        )
+
 
 def main():
-    #=============================================================================#
-    imgSpacing = np.array([0.5,]*3, dtype=float)
+    # =============================================================================#
+    imgSpacing = np.array([0.5, ] * 3, dtype=float)
     unitChoices = ('nm', 'um', 'mm', 'cm', 'm', 'km')
     defaultUnit = 'mm'
-    #=============================================================================#
+    # =============================================================================#
     parser = argparse.ArgumentParser(
-                description=_descStr,
-                formatter_class=RawTextHelpFormatter,
-                )
+        description=_descStr,
+        formatter_class=RawTextHelpFormatter,
+    )
     parser.add_argument('gTruthPath',
                         help='ground truth surface path')
     parser.add_argument('testPath',
@@ -238,12 +247,12 @@ def main():
     gtUnitScaling = dim_unit_scaling(args.groundtruth_unit, defaultUnit)
     testUnitScaling = dim_unit_scaling(args.test_unit, defaultUnit)
     results, surfTest, surfGT, imgTest, imgGT = calcSegmentationErrors(
-                                    args.testPath,
-                                    args.gTruthPath,
-                                    imgSpacing,
-                                    gtUnitScaling,
-                                    testUnitScaling
-                                    )
+        args.testPath,
+        args.gTruthPath,
+        imgSpacing,
+        gtUnitScaling,
+        testUnitScaling
+    )
     for k, v in sorted(results.items()):
         print('{}: {}'.format(k, v))
 
@@ -251,12 +260,13 @@ def main():
         testName = path.splitext(path.split(args.testPath)[1])[0]
         gtName = path.splitext(path.split(args.gTruthPath)[1])[0]
         writeResults(args.outpath, testName, gtName, results)
-    
+
     if args.display and can_visual:
         V = fieldvi.Fieldvi()
         V.configure_traits()
-        V.scene.background=(0,0,0)
+        V.scene.background = (0, 0, 0)
         visualise(V, surfTest, surfGT, imgTest, imgGT)
+
 
 if __name__ == '__main__':
     main()

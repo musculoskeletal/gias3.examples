@@ -14,13 +14,16 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import scipy
 from scipy.spatial import cKDTree
+
 from gias2.mesh import vtktools
 from gias2.visualisation import fieldvi
+
 
 def loadpoly(filename):
     r = vtktools.Reader()
     r.read(filename)
     return r.getSimplemesh()
+
 
 auto_file = 'data/autoCarpal1_outer.stl'
 manual_file = 'data/manualCarpal1.stl'
@@ -29,24 +32,24 @@ auto_mesh = loadpoly(auto_file)
 manual_mesh = loadpoly(manual_file)
 
 # calc closest distances from auto points to manual points
-T = cKDTree( manual_mesh.v )
-cDist,cIndex = T.query( auto_mesh.v )
-distRMS = scipy.sqrt((cDist**2.0).mean())
+T = cKDTree(manual_mesh.v)
+cDist, cIndex = T.query(auto_mesh.v)
+distRMS = scipy.sqrt((cDist ** 2.0).mean())
 distMean = cDist.mean()
 distSD = cDist.std()
 distMax = cDist.max()
 distMin = cDist.min()
 
 # print results
-print('Distance Summary:\n mean: %(u)8.6f\n S.D.: %(sd)8.6f\n RMS: %(rms)8.6f\n max: %(max)8.6f\n min: %(min)8.6f'\
-		%{'u':distMean, 'sd':distSD, 'rms':distRMS, 'max':distMax, 'min':distMin})
+print('Distance Summary:\n mean: %(u)8.6f\n S.D.: %(sd)8.6f\n RMS: %(rms)8.6f\n max: %(max)8.6f\n min: %(min)8.6f' \
+      % {'u': distMean, 'sd': distSD, 'rms': distRMS, 'max': distMax, 'min': distMin})
 
 # render 
 V = fieldvi.Fieldvi()
-#~ V.addTri( 'auto', auto_mesh.getSimplemesh(), renderArgs={'color':(0,0,1)} )
-V.addTri( 'autoCarpal', auto_mesh )
-V.addTriScalarData( 'autoCarpal', 'closest distance', cDist )
-V.addTri( 'manualCarpal', manual_mesh, renderArgs={'color':(0,0,1)} )
+# ~ V.addTri( 'auto', auto_mesh.getSimplemesh(), renderArgs={'color':(0,0,1)} )
+V.addTri('autoCarpal', auto_mesh)
+V.addTriScalarData('autoCarpal', 'closest distance', cDist)
+V.addTri('manualCarpal', manual_mesh, renderArgs={'color': (0, 0, 1)})
 
 V.configure_traits()
-V.scene.background=(1,1,1)
+V.scene.background = (1, 1, 1)

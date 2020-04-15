@@ -14,10 +14,10 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 
 import numpy as np
+
 from gias2.mesh import simplemesh
 from gias2.mesh import vtktools
 from gias2.visualisation import fieldvi
-reload(vtktools)
 
 input_filename = 'data/autoCarpal1_outer.stl'
 output_filename_ply = 'outputs/autoCarpal1_outer.ply'
@@ -30,7 +30,7 @@ output_filename_vtp = 'outputs/autoCarpal1_outer_stl.vtp'
 mesh = simplemesh.stl2SimpleMesh(input_filename)
 
 # create random colours for vertices
-vcolours = np.random.random_integers(0,255, mesh.v.shape[0]*3).reshape([-1,3])
+vcolours = np.random.random_integers(0, 255, mesh.v.shape[0] * 3).reshape([-1, 3])
 
 # write out in various formats
 writer = vtktools.Writer(v=mesh.v, f=mesh.f, vcolour=vcolours)

@@ -19,9 +19,9 @@ outputFilename = 'data/prox_femur_out.inp'
 
 reader = inp.InpReader(inputFilename)
 header = reader.readHeader()
-print(('header: '+' '.join(header)))
+print(('header: ' + ' '.join(header)))
 meshnames = reader.readMeshNames()
-print(('mesh names: '+', '.join(meshnames)))
+print(('mesh names: ' + ', '.join(meshnames)))
 mesh = reader.readMesh(meshnames[0])
 print((mesh.getNumberOfElems()))
 print((mesh.getNumberOfNodes()))
