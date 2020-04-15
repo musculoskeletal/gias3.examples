@@ -17,19 +17,25 @@ from gias2.mesh import inp
 inputFilename = 'data/prox_femur.inp'
 outputFilename = 'data/prox_femur_out.inp'
 
-reader = inp.InpReader(inputFilename)
-header = reader.readHeader()
-print(('header: ' + ' '.join(header)))
-meshnames = reader.readMeshNames()
-print(('mesh names: ' + ', '.join(meshnames)))
-mesh = reader.readMesh(meshnames[0])
-print((mesh.getNumberOfElems()))
-print((mesh.getNumberOfNodes()))
-print((mesh.getNode(10)))
-print((mesh.getElem(10)))
-print((mesh.getElemType()))
 
-writer = inp.InpWriter(outputFilename)
-writer.addHeader(header[0])
-writer.addMesh(mesh)
-writer.write()
+def main():
+    reader = inp.InpReader(inputFilename)
+    header = reader.readHeader()
+    print(('header: ' + ' '.join(header)))
+    meshnames = reader.readMeshNames()
+    print(('mesh names: ' + ', '.join(meshnames)))
+    mesh = reader.readMesh(meshnames[0])
+    print((mesh.getNumberOfElems()))
+    print((mesh.getNumberOfNodes()))
+    print((mesh.getNode(10)))
+    print((mesh.getElem(10)))
+    print((mesh.getElemType()))
+
+    writer = inp.InpWriter(outputFilename)
+    writer.addHeader(header[0])
+    writer.addMesh(mesh)
+    writer.write()
+
+
+if __name__ == '__main__':
+    main()

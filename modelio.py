@@ -18,28 +18,35 @@ from gias2.mesh import simplemesh, inp
 from gias2.visualisation import fieldvi
 
 filename = 'data/2008_1741_tibia_fibula.wrl'
-meshes = simplemesh.vrml2SimpleMesh(filename)[:2]
 
-# visualise models
-V = fieldvi.Fieldvi()
-for mi, m in enumerate(meshes):
-    V.addTri('mesh_' + str(mi), m)
 
-V.configure_traits()
-V.scene.background = (0, 0, 0)
+def main():
+    meshes = simplemesh.vrml2SimpleMesh(filename)[:2]
 
-# export as INP
-tibiaInpMesh = inp.Mesh('tibia')
-tibiaInpMesh.setNodes(meshes[0].v, list(range(1, meshes[0].v.shape[0] + 1)))
-tibiaInpMesh.setElems(meshes[0].f + 1, list(range(1, meshes[0].f.shape[0] + 1)), 'R3D3')
+    # visualise models
+    V = fieldvi.Fieldvi()
+    for mi, m in enumerate(meshes):
+        V.addTri('mesh_' + str(mi), m)
 
-fibulaInpMesh = inp.Mesh('fibula')
-fibulaInpMesh.setNodes(meshes[1].v, list(range(1, meshes[1].v.shape[0] + 1)))
-fibulaInpMesh.setElems(meshes[1].f + 1, list(range(1, meshes[1].f.shape[0] + 1)), 'R3D3')
+    V.configure_traits()
+    V.scene.background = (0, 0, 0)
 
-inpFilename = 'outputs/tibia_fibula.inp'
-inpWriter = inp.InpWriter(inpFilename, autoFormat=True)
-inpWriter.addHeader('tibia fibula models')
-inpWriter.addMesh(tibiaInpMesh)
-inpWriter.addMesh(fibulaInpMesh)
-inpWriter.write()
+    # export as INP
+    tibiaInpMesh = inp.Mesh('tibia')
+    tibiaInpMesh.setNodes(meshes[0].v, list(range(1, meshes[0].v.shape[0] + 1)))
+    tibiaInpMesh.setElems(meshes[0].f + 1, list(range(1, meshes[0].f.shape[0] + 1)), 'R3D3')
+
+    fibulaInpMesh = inp.Mesh('fibula')
+    fibulaInpMesh.setNodes(meshes[1].v, list(range(1, meshes[1].v.shape[0] + 1)))
+    fibulaInpMesh.setElems(meshes[1].f + 1, list(range(1, meshes[1].f.shape[0] + 1)), 'R3D3')
+
+    inpFilename = 'outputs/tibia_fibula.inp'
+    inpWriter = inp.InpWriter(inpFilename, autoFormat=True)
+    inpWriter.addHeader('tibia fibula models')
+    inpWriter.addMesh(tibiaInpMesh)
+    inpWriter.addMesh(fibulaInpMesh)
+    inpWriter.write()
+
+
+if __name__ == '__main__':
+    main()

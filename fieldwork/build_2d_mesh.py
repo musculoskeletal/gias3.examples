@@ -24,59 +24,65 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from gias2.fieldwork.interactive import mesh_builder
 from gias2.mesh import simplemesh
 
-# load surface data
-dataFilename = 'data/BN00105_E15006_S01_mc1 8_001.wrl'
-s = simplemesh.vrml2SimpleMesh(dataFilename)[0]
-data = s.v / 10000.0
 
-# mesh filenames
-GFName = 'test_mesh'
-GFFName = 'data/test_mesh'
-ensFName = 'data/test_mesh'
-meshFName = 'data/test_mesh'
-version = '1.0'
+def main():
+    # load surface data
+    dataFilename = 'data/BN00105_E15006_S01_mc1 8_001.wrl'
+    s = simplemesh.vrml2SimpleMesh(dataFilename)[0]
+    data = s.v / 10000.0
 
-# types of elements and basis functions we will use.
-# choosing other element types in the mesh builder will lead to errors
-# when trying to evaluate the mesh
-GFElemBasis = {
-    'tri10': 'simplex_L3_L3',
-    'quad44': 'quad_L3_L3'
-}
-curveElemBasis = {
-    'line4l': 'line_L3',
-}
+    # mesh filenames
+    GFName = 'test_mesh'
+    GFFName = 'data/test_mesh'
+    ensFName = 'data/test_mesh'
+    meshFName = 'data/test_mesh'
+    version = '1.0'
 
-# load a previously started mesh or start a new one
-loadMesh = False
+    # types of elements and basis functions we will use.
+    # choosing other element types in the mesh builder will lead to errors
+    # when trying to evaluate the mesh
+    GFElemBasis = {
+        'tri10': 'simplex_L3_L3',
+        'quad44': 'quad_L3_L3'
+    }
+    curveElemBasis = {
+        'line4l': 'line_L3',
+    }
 
-# initialise mesh builder
-MB = mesh_builder.MeshBuilder()
-MB.setSurfaceData(data)
-# ~ MB.setCurveElemBasis( curveElemBasis )
-if not loadMesh:
-    MB.initialiseGF(GFName, 2, 3, GFElemBasis)
-else:
-    if (version is None) or (len(version) == 0):
-        MB.loadGF(
-            GFFName + '.geof',
-            ensFName + '.ens',
-            meshFName + '.mesh'
-        )
+    # load a previously started mesh or start a new one
+    loadMesh = False
+
+    # initialise mesh builder
+    MB = mesh_builder.MeshBuilder()
+    MB.setSurfaceData(data)
+    # ~ MB.setCurveElemBasis( curveElemBasis )
+    if not loadMesh:
+        MB.initialiseGF(GFName, 2, 3, GFElemBasis)
     else:
-        MB.loadGF(
-            GFFName + '_' + version + '.geof',
-            ensFName + '_' + version + '.ens',
-            meshFName + '_' + version + '.mesh'
-        )
+        if (version is None) or (len(version) == 0):
+            MB.loadGF(
+                GFFName + '.geof',
+                ensFName + '.ens',
+                meshFName + '.mesh'
+            )
+        else:
+            MB.loadGF(
+                GFFName + '_' + version + '.geof',
+                ensFName + '_' + version + '.ens',
+                meshFName + '_' + version + '.mesh'
+            )
 
-MB.setGFFilenames(GFFName, ensFName, meshFName)
-MB.setGFVersion(version)
+    MB.setGFFilenames(GFFName, ensFName, meshFName)
+    MB.setGFVersion(version)
 
-# ~ for c in boundaryCurveFiles:
-# ~ MB.loadBoundaryCurve( c[0], c[1], c[2] )
+    # ~ for c in boundaryCurveFiles:
+    # ~ MB.loadBoundaryCurve( c[0], c[1], c[2] )
 
-# intialise viewer
-V = mesh_builder.Viewer()
-V.setMeshBuilder(MB)
-V.configure_traits()
+    # intialise viewer
+    V = mesh_builder.Viewer()
+    V.setMeshBuilder(MB)
+    V.configure_traits()
+
+
+if __name__ == '__main__':
+    main()

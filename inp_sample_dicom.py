@@ -34,6 +34,7 @@ import numpy as np
 from gias2.image_analysis.image_tools import Scan
 from gias2.mesh import inp
 
+
 # E_BINS = np.linspace(50, 1550, 16)  # in MPa
 # E_BIN_VALUES = np.hstack([0.1, np.linspace(100, 1500, 15), 20000])  # in MPa
 
@@ -48,33 +49,36 @@ from gias2.mesh import inp
 # E_BINS = np.linspace(50, 10050, 16)  # in MPa
 # E_BIN_VALUES = np.hstack([0.1, np.linspace(100, 10000, 15), 20000])  # in MPa
 
-parser = argparse.ArgumentParser(
-    description='Sample a DICOM stack at the element centroids of an INP mesh.'
-)
-parser.add_argument(
-    'config',
-    help='config file path.'
-)
-parser.add_argument(
-    '-e', '--elset',
-    default=None,
-    help='The ELSET in the INP file to fit. If not given, the first ELSET will be used.'
-)
-parser.add_argument(
-    '--flipx',
-    action='store_true',
-    help='Flip the X axis of the dicom stack'
-)
-parser.add_argument(
-    '--flipz',
-    action='store_true',
-    help='Flip the Z (axial) axis of the dicom stack'
-)
-parser.add_argument(
-    '-v', '--view',
-    action='store_true',
-    help='view results in mayavi'
-)
+
+def make_parser():
+    parser = argparse.ArgumentParser(
+        description='Sample a DICOM stack at the element centroids of an INP mesh.'
+    )
+    parser.add_argument(
+        'config',
+        help='config file path.'
+    )
+    parser.add_argument(
+        '-e', '--elset',
+        default=None,
+        help='The ELSET in the INP file to fit. If not given, the first ELSET will be used.'
+    )
+    parser.add_argument(
+        '--flipx',
+        action='store_true',
+        help='Flip the X axis of the dicom stack'
+    )
+    parser.add_argument(
+        '--flipz',
+        action='store_true',
+        help='Flip the Z (axial) axis of the dicom stack'
+    )
+    parser.add_argument(
+        '-v', '--view',
+        action='store_true',
+        help='view results in mayavi'
+    )
+    return parser
 
 
 # =============================================================================#
@@ -199,6 +203,7 @@ def powerlaw(hu, p):
 def main():
     # =============================================================================#
     # parse inputs
+    parser = make_parser()
     args = parser.parse_args()
     params = parse_config(args.config)
 

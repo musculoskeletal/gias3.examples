@@ -27,72 +27,76 @@ output_dir = 'outputs/'
 discretisation = [12, 12]  # for visualisation
 plotPCs = 10  # number of PCs to plot data for (must be less than number of subjects)
 
-# ===============================================#
-# load subject ID's
-subjectIDs = sorted(np.loadtxt(subjectIDFile, dtype=str))
 
-# load mean model 
-meanModel = geometric_field.load_geometric_field(
-    meanGFFileStr, ensFile, meshFile)
+def main():
+    # ===============================================#
+    # load subject ID's
+    subjectIDs = sorted(np.loadtxt(subjectIDFile, dtype=str))
 
-# load pca
-pc = PCA.loadPrincipalComponents(pcFile)
+    # load mean model
+    meanModel = geometric_field.load_geometric_field(
+        meanGFFileStr, ensFile, meshFile)
 
-# ==============================================#
-# print the % variance for each PC
-componentVar = pc.getNormSpectrum()
-print
-'PC Percentage Significance'
-for i in xrange(plotPCs):
-    print
-    'pc%d: %4.2f%%' % (i + 1, componentVar[i] * 100)
+    # load pca
+    pc = PCA.loadPrincipalComponents(pcFile)
 
-# plot the % variance for each PC
-plotTitle = 'PC Significance'
-PCA.plotSpectrum(pc, plotPCs, plotTitle, skipfirst=0, cumul=0, PRand=None)
+    # ==============================================#
+    # print the % variance for each PC
+    componentVar = pc.getNormSpectrum()
+    print('PC Percentage Significance')
+    for i in range(plotPCs):
+        print('pc%d: %4.2f%%' % (i + 1, componentVar[i] * 100))
 
-# plot projections of models on PCs. Set nTailLabels to 'all' to label all points
-PCA.plotModeScatter(pc, xMode=0, yMode=1, zMode=None, pointLabels=subjectIDs,
-                    nTailLabels=3)
+    # plot the % variance for each PC
+    plotTitle = 'PC Significance'
+    PCA.plotSpectrum(pc, plotPCs, plotTitle, skipfirst=0, cumul=0, PRand=None)
 
-# visualise 3D models
-modelEval = geometric_field.makeGeometricFieldEvaluatorSparse(meanModel, discretisation)
-V = fieldvi.Fieldvi()
-V.displayGFNodes = False  # hide mesh nodes
-V.GFD = discretisation  # element discretisation
-V.addGeometricField('mean model', meanModel, modelEval)  # add mesh to viewer with the evaluator and a name
-V.addPC('femur', pc)  # add the pca model, it is linked to the mesh by its name
-V.configure_traits()  # start the viewer
-V.scene.background = (1.0, 1.0, 1.0)
+    # plot projections of models on PCs. Set nTailLabels to 'all' to label all points
+    PCA.plotModeScatter(pc, xMode=0, yMode=1, zMode=None, pointLabels=subjectIDs,
+                        nTailLabels=3)
 
-"""
-To view the principal components of the shape model in the pop up window,
-first select "mean mode" in the GFs combobox and click "update" under it.
-Then go to the "statistical shape model" tab, select "femur" for PC
-Models, and "mean model::gf" for PC Geometry. Then you can select the PC
-you want to view by selecting the corresponding "Mode index" and dragging
-the slider between -2 and +2 standard deviations.
-"""
-# =============================================#
-# export some geometries from the shape model
+    # visualise 3D models
+    modelEval = geometric_field.makeGeometricFieldEvaluatorSparse(meanModel, discretisation)
+    V = fieldvi.Fieldvi()
+    V.displayGFNodes = False  # hide mesh nodes
+    V.GFD = discretisation  # element discretisation
+    V.addGeometricField('mean model', meanModel, modelEval)  # add mesh to viewer with the evaluator and a name
+    V.addPC('femur', pc)  # add the pca model, it is linked to the mesh by its name
+    V.configure_traits()  # start the viewer
+    V.scene.background = (1.0, 1.0, 1.0)
 
-# reconstruct mesh parameters at -2 and +2 SD along 2nd PC
-reconPC = [1, ]
-modelParamsM2 = pc.reconstruct(pc.getWeightsBySD(reconPC, [-2.0, ]), reconPC)
-modelParamsP2 = pc.reconstruct(pc.getWeightsBySD(reconPC, [+2.0, ]), reconPC)
-modelParamsMean = pc.reconstruct(pc.getWeightsBySD(reconPC, [0.0, ]), reconPC)
+    """
+    To view the principal components of the shape model in the pop up window,
+    first select "mean mode" in the GFs combobox and click "update" under it.
+    Then go to the "statistical shape model" tab, select "femur" for PC
+    Models, and "mean model::gf" for PC Geometry. Then you can select the PC
+    you want to view by selecting the corresponding "Mode index" and dragging
+    the slider between -2 and +2 standard deviations.
+    """
+    # =============================================#
+    # export some geometries from the shape model
 
-meanModel.set_field_parameters(modelParamsM2.reshape([3, -1, 1]))
-v, f = meanModel.triangulate(discretisation, merge=False)
-w = vtktools.Writer(v=v, f=f)
-w.write(path.join(output_dir, 'femur_pc2_-2sd.stl'))
+    # reconstruct mesh parameters at -2 and +2 SD along 2nd PC
+    reconPC = [1, ]
+    modelParamsM2 = pc.reconstruct(pc.getWeightsBySD(reconPC, [-2.0, ]), reconPC)
+    modelParamsP2 = pc.reconstruct(pc.getWeightsBySD(reconPC, [+2.0, ]), reconPC)
+    modelParamsMean = pc.reconstruct(pc.getWeightsBySD(reconPC, [0.0, ]), reconPC)
 
-meanModel.set_field_parameters(modelParamsP2.reshape([3, -1, 1]))
-v, f = meanModel.triangulate(discretisation, merge=False)
-w = vtktools.Writer(v=v, f=f)
-w.write(path.join(output_dir, 'femur_pc2_+2sd.stl'))
+    meanModel.set_field_parameters(modelParamsM2.reshape([3, -1, 1]))
+    v, f = meanModel.triangulate(discretisation, merge=False)
+    w = vtktools.Writer(v=v, f=f)
+    w.write(path.join(output_dir, 'femur_pc2_-2sd.stl'))
 
-meanModel.set_field_parameters(modelParamsMean.reshape([3, -1, 1]))
-v, f = meanModel.triangulate(discretisation, merge=False)
-w = vtktools.Writer(v=v, f=f)
-w.write(path.join(output_dir, 'femur_mean.stl'))
+    meanModel.set_field_parameters(modelParamsP2.reshape([3, -1, 1]))
+    v, f = meanModel.triangulate(discretisation, merge=False)
+    w = vtktools.Writer(v=v, f=f)
+    w.write(path.join(output_dir, 'femur_pc2_+2sd.stl'))
+
+    meanModel.set_field_parameters(modelParamsMean.reshape([3, -1, 1]))
+    v, f = meanModel.triangulate(discretisation, merge=False)
+    w = vtktools.Writer(v=v, f=f)
+    w.write(path.join(output_dir, 'femur_mean.stl'))
+
+
+if __name__ == '__main__':
+    main()

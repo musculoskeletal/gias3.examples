@@ -12,12 +12,13 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ===============================================================================
 """
 
-import scipy
 import sys
-from gias.learning import PCA
+
+import scipy
 
 from gias2.fieldwork.field import geometric_field
 from gias2.fieldwork.field.tools import mesh_fitter
+from gias2.learning import PCA
 from gias2.mesh import simplemesh
 from gias2.visualisation import fieldvi
 
@@ -102,9 +103,9 @@ def combineHipMeshes(LH, RH, sac, name):
 # ======================================================================#
 def main(scan):
     sys.path.append('fit_whole_pelvis_data/')
-    import LH_params as LHParams
-    import RH_params as RHParams
-    import sac_params as sacParams
+    from gias2.examples.fieldwork.fit_whole_pelvis_data import LH_params as LHParams
+    from gias2.examples.fieldwork.fit_whole_pelvis_data import RH_params as RHParams
+    from gias2.examples.fieldwork.fit_whole_pelvis_data import sac_params as sacParams
 
     save = 1
     log = 1
@@ -210,4 +211,5 @@ def main(scan):
 
 
 # ======================================================================#
-[LHFit, RHFit, SacFit], combMeshFitted, V = main('2007_5028')
+if __name__ == '__main__':
+    [LHFit, RHFit, SacFit], combMeshFitted, V = main('2007_5028')

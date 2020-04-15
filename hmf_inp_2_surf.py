@@ -48,45 +48,48 @@ from gias2.mesh import vtktools, inp
 from gias2.common import transform3D
 from gias2.registration import alignment_fitting as af
 
-parser = argparse.ArgumentParser(
-    description='host-mesh fit an INP mesh to a surface'
-)
-parser.add_argument(
-    'source_volume',
-    help='source INP file to be fitted'
-)
-parser.add_argument(
-    'source_surf',
-    help='surface model file of the source INP file to be fitted'
-)
-parser.add_argument(
-    'target_surf',
-    help='target surface model file to be fitted to'
-)
-parser.add_argument(
-    'output',
-    help='output INP file of the fitted mesh'
-)
-parser.add_argument(
-    '-e', '--elset',
-    default=None,
-    help='The ELSET in the INP file to fit. If not given, the first ELSET will be used.'
-)
-parser.add_argument(
-    '-r', '--rotate',
-    nargs=3, type=float, default=[0, 0, 0],
-    help='Initial Eulerian rotations to apply to the source surface to align it with the target surface. In degrees.'
-)
-parser.add_argument(
-    '--orig-position',
-    action='store_true',
-    help='Return fitted source mesh to original source position'
-)
-parser.add_argument(
-    '-v', '--view',
-    action='store_true',
-    help='view results in mayavi'
-)
+
+def make_parser():
+    parser = argparse.ArgumentParser(
+        description='host-mesh fit an INP mesh to a surface'
+    )
+    parser.add_argument(
+        'source_volume',
+        help='source INP file to be fitted'
+    )
+    parser.add_argument(
+        'source_surf',
+        help='surface model file of the source INP file to be fitted'
+    )
+    parser.add_argument(
+        'target_surf',
+        help='target surface model file to be fitted to'
+    )
+    parser.add_argument(
+        'output',
+        help='output INP file of the fitted mesh'
+    )
+    parser.add_argument(
+        '-e', '--elset',
+        default=None,
+        help='The ELSET in the INP file to fit. If not given, the first ELSET will be used.'
+    )
+    parser.add_argument(
+        '-r', '--rotate',
+        nargs=3, type=float, default=[0, 0, 0],
+        help='Initial Eulerian rotations to apply to the source surface to align it with the target surface. In degrees.'
+    )
+    parser.add_argument(
+        '--orig-position',
+        action='store_true',
+        help='Return fitted source mesh to original source position'
+    )
+    parser.add_argument(
+        '-v', '--view',
+        action='store_true',
+        help='view results in mayavi'
+    )
+    return parser
 
 
 def _load_inp(fname, meshname=None):
@@ -106,6 +109,7 @@ def _load_inp(fname, meshname=None):
 def main():
     # =============================================================================#
     # input arguments
+    parser = make_parser()
     args = parser.parse_args()
 
     # initial rotation to apply to the source model for rigid-body registration

@@ -26,38 +26,44 @@ output_filename_vrml = 'outputs/autoCarpal1_outer.wrl'
 output_filename_stl = 'outputs/autoCarpal1_outer_stl.stl'
 output_filename_vtp = 'outputs/autoCarpal1_outer_stl.vtp'
 
-# the example geometry
-mesh = simplemesh.stl2SimpleMesh(input_filename)
 
-# create random colours for vertices
-vcolours = np.random.random_integers(0, 255, mesh.v.shape[0] * 3).reshape([-1, 3])
+def main():
+    # the example geometry
+    mesh = simplemesh.stl2SimpleMesh(input_filename)
 
-# write out in various formats
-writer = vtktools.Writer(v=mesh.v, f=mesh.f, vcolour=vcolours)
-writer.writePLY(output_filename_ply)
-writer.writeOBJ(output_filename_obj)
-writer.writeSTL(output_filename_stl)
-writer.writeVRML(output_filename_vrml)
-writer.writeVTP(output_filename_vtp)
+    # create random colours for vertices
+    vcolours = np.random.random_integers(0, 255, mesh.v.shape[0] * 3).reshape([-1, 3])
 
-# read in various formats
-reader = vtktools.Reader()
-reader.read(output_filename_ply)
-mesh_ply = reader.getSimplemesh()
-reader.read(output_filename_obj)
-mesh_obj = reader.getSimplemesh()
-reader.read(output_filename_stl)
-mesh_stl = reader.getSimplemesh()
-reader.read(output_filename_vrml)
-mesh_vrml = reader.getSimplemesh()
-reader.read(output_filename_vtp)
-mesh_vtp = reader.getSimplemesh()
+    # write out in various formats
+    writer = vtktools.Writer(v=mesh.v, f=mesh.f, vcolour=vcolours)
+    writer.writePLY(output_filename_ply)
+    writer.writeOBJ(output_filename_obj)
+    writer.writeSTL(output_filename_stl)
+    writer.writeVRML(output_filename_vrml)
+    writer.writeVTP(output_filename_vtp)
 
-V = fieldvi.Fieldvi()
-V.addTri('original', mesh)
-V.addTri('ply', mesh_ply)
-V.addTri('stl', mesh_stl)
-V.addTri('obj', mesh_obj)
-V.addTri('vrml', mesh_vrml)
-V.addTri('vtp', mesh_vtp)
-V.configure_traits()
+    # read in various formats
+    reader = vtktools.Reader()
+    reader.read(output_filename_ply)
+    mesh_ply = reader.getSimplemesh()
+    reader.read(output_filename_obj)
+    mesh_obj = reader.getSimplemesh()
+    reader.read(output_filename_stl)
+    mesh_stl = reader.getSimplemesh()
+    reader.read(output_filename_vrml)
+    mesh_vrml = reader.getSimplemesh()
+    reader.read(output_filename_vtp)
+    mesh_vtp = reader.getSimplemesh()
+
+    V = fieldvi.Fieldvi()
+    V.addTri('original', mesh)
+    V.addTri('ply', mesh_ply)
+    V.addTri('stl', mesh_stl)
+    V.addTri('obj', mesh_obj)
+    V.addTri('vrml', mesh_vrml)
+    V.addTri('vtp', mesh_vtp)
+    V.configure_traits()
+
+
+if __name__ == '__main__':
+    main()

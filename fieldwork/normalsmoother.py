@@ -12,7 +12,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ===============================================================================
 """
 
-import scipy
+import numpy
 from scipy.optimize import fmin
 
 from gias2.fieldwork.field import ensemble_field_function as EFF
@@ -30,16 +30,16 @@ except ImportError:
 
 
 def mag(V):
-    return scipy.sqrt((V * V).sum())
+    return numpy.sqrt((V * V).sum())
 
 
 def makeVectors(angle):
-    V1 = scipy.array([1.0, 0.0])
-    V2 = scipy.array([0.0, 0.0])
+    V1 = numpy.array([1.0, 0.0])
+    V2 = numpy.array([0.0, 0.0])
 
-    V2[0] = scipy.cos(angle) / V1[0]
-    V2[1] = scipy.sqrt(1 - V2[0] * V2[0])
-    if angle > scipy.pi:
+    V2[0] = numpy.cos(angle) / V1[0]
+    V2[1] = numpy.sqrt(1 - V2[0] * V2[0])
+    if angle > numpy.pi:
         V2[1] *= -1.0
 
     return V1, V2
@@ -48,17 +48,17 @@ def makeVectors(angle):
 def makeElemParams(xmin, xmax, ymin, ymax, theta):
     xlen = xmax - xmin
     a = makeVectors(theta)[1]
-    t = scipy.linspace(0.0, xlen, 5)
+    t = numpy.linspace(0.0, xlen, 5)
 
     x = xmin + t * a[0]
-    X = scipy.hstack([x, x, x, x, x])
+    X = numpy.hstack([x, x, x, x, x])
 
-    Y = scipy.linspace(ymin, ymax, 5).repeat(5)
+    Y = numpy.linspace(ymin, ymax, 5).repeat(5)
 
     z = 0.0 + t * a[1]
-    Z = scipy.hstack([z, z, z, z, z])
+    Z = numpy.hstack([z, z, z, z, z])
 
-    return scipy.array([X, Y, Z])[:, :, scipy.newaxis]
+    return numpy.array([X, Y, Z])[:, :, numpy.newaxis]
 
 
 def obj(V1, V2):
@@ -68,7 +68,7 @@ def obj(V1, V2):
 
 def vector2DPlot():
     from matplotlib import pyplot as plot
-    angles = scipy.linspace(0.0, 360.0, 20) * scipy.pi / 180
+    angles = numpy.linspace(0.0, 360.0, 20) * numpy.pi / 180
     X = []
     for a in angles:
         V1, V2 = makeVectors(a)
@@ -140,7 +140,7 @@ def mesh2DPlot():
         print('matplotlib not found')
         return
 
-    angles = scipy.linspace(0.0, 360, 20) * scipy.pi / 180
+    angles = numpy.linspace(0.0, 360, 20) * numpy.pi / 180
     X = []
     for a in angles:
         G = makeMesh(a)
@@ -152,7 +152,7 @@ def mesh2DPlot():
 
 
 def mesh2DFitTest():
-    G, GFitted, errFitted = fit(91 * scipy.pi / 180, 200)
+    G, GFitted, errFitted = fit(91 * numpy.pi / 180, 200)
 
     if has_mayavi:
         V = fieldvi.Fieldvi()
@@ -169,7 +169,7 @@ def mesh2DFitTest():
 
 
 def mesh2DFitRotateTest():
-    G, GFitted, errFitted = fitRotate(350 * scipy.pi / 180, 3)
+    G, GFitted, errFitted = fitRotate(350 * numpy.pi / 180, 3)
 
     if has_mayavi:
         V = fieldvi.Fieldvi()

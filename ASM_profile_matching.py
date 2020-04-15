@@ -33,8 +33,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ===============================================================================
 """
 
-import scipy
-from scipy import random
+import numpy as np
+from numpy import random
 from scipy.optimize import leastsq
 
 from gias2.common import transform3D, math
@@ -58,19 +58,19 @@ except ImportError:
 
 def plotPMulti(P, plotFormat, err=None, PI=None):
     nPlots = int(plotFormat[0]) * int(plotFormat[1])
-    if PI == None:
-        PI = scipy.linspace(0, P.shape[0] - 1, nPlots + 2).astype(int)[1:-1]
+    if PI is None:
+        PI = np.linspace(0, P.shape[0] - 1, nPlots + 2).astype(int)[1:-1]
     fig = plot.figure()
-    x = scipy.arange(P.shape[1])
-    if err != None:
+    x = np.arange(P.shape[1])
+    if err is not None:
         for i, pi in enumerate(PI):
             plot.subplot(plotFormat[0], plotFormat[1], i + 1)
-            plot.errorbar(x, P[pi], yerr=err[pi], linewidth=3);
+            plot.errorbar(x, P[pi], yerr=err[pi], linewidth=3)
             plot.title(str(pi))
     else:
         for i, pi in enumerate(PI):
             plot.subplot(plotFormat[0], plotFormat[1], i + 1)
-            plot.plot(x, P[pi], linewidth=3);
+            plot.plot(x, P[pi], linewidth=3)
             plot.title(str(pi))
 
     plot.show()
@@ -87,7 +87,7 @@ def makeScan(imageSize, int1Mean, int2Mean, intMeanSD, intSD):
     int1 = random.normal(int1Mean, intMeanSD)
     int2 = random.normal(int2Mean, intMeanSD)
 
-    I = scipy.zeros(imageSize)
+    I = np.zeros(imageSize)
     halfX = imageSize[0] / 2
     I[:halfX] = random.normal(int1Mean, intSD, I[:halfX].shape)
     I[halfX:] = random.normal(int2Mean, intSD, I[:halfX].shape)
@@ -125,172 +125,173 @@ segLandmarkT = [7, 5, 5, 0, 0.3, 0]  # rigid-body transform to offset landmarks 
 # segmentation. [tx,ty,tz,rx,ry,rz]
 verbose = 1
 
-# ======================================================================#
-# training                                                             #
-# ======================================================================#
-# generate landmarks coordinates at which training images will be sampled
-landmarkX, landmarkY = scipy.meshgrid(
-    scipy.linspace(
-        0, imageSize[1], landmarkGrid[0] + 2
-    )[1:-1],
-    scipy.linspace(
-        0, imageSize[2], landmarkGrid[1] + 2
-    )[1:-1]
-)
-landmarkCoords = scipy.vstack([
-    scipy.ones(landmarkGrid[0] * landmarkGrid[1]) * imageSize[0] / 2,
-    landmarkX.ravel(),
-    landmarkY.ravel()
-]).T
 
-# generate landmark normal vectors along which training images will be
-# sampled from landmarks
-landmarkNormals = scipy.array([[1.0, 0.0, 0.0], ] * landmarkCoords.shape[0])
-
-# create a list of 3-tuples each containing an image, its landmark coords,
-# and its landmark normals. This is fed to the ASM trainer.
-trainingSamples = []
-for i in range(nImages):
-    s = makeScan(imageSize, int1Mean, int2Mean, intMeanSD, intSD)
-    trainingSamples.append((s, landmarkCoords, landmarkNormals))
-
-# initialise and run training instance
-asmTrainer = ASM.TrainASMPPCs(ND, NLim, False, False)
-asmTrainer.setTrainingSamples(trainingSamples, landmarkCoords.shape[0])
-asmTrainer.sampleTrainingImages()
-asmTrainer.trainPPCs()
-
-# plot the mean sample gradient at each landmark
-dPMeans = scipy.array([pc.getMean() for pc in asmTrainer.PPCs.L])
-if has_plot:
-    plotPMulti(dPMeans, (3, 3))
-dPPCs = asmTrainer.PPCs
-
-# ======================================================================#
-# segmentation                                                         #
-# ======================================================================#
-# displace landmarks by a rigid transform
-segScan = makeScan(segImageSize, int1Mean, int2Mean, intMeanSD, intSD)
-landmarkCoordsT = transform3D.transformRigid3DAboutCoM(
-    landmarkCoords,
-    segLandmarkT
-)
-landmarkNormalsT = transform3D.transformRigid3D(
-    landmarkNormals,
-    scipy.hstack([0, 0, 0, segLandmarkT[3:]])
-)
-landmarkNormalsT = scipy.array([math.norm(n) for n in landmarkNormalsT])
-
-
-# Define functions that the asm segmentation will call on to provide
-# and update landmark information 
-
-# function to return landmark coordinates
-def coordEvaluator(t):
-    # rigid transform
-    return transform3D.transformRigid3DAboutCoM(landmarkCoordsT, t)
-
-
-# function to return landmark normal vectors
-def normalEvaluator(t):
-    # rigid transform
-    NT = transform3D.transformRigid3D(
-        landmarkNormalsT,
-        scipy.hstack([0, 0, 0, t[3:]])
+def main():
+    # ======================================================================#
+    # training                                                             #
+    # ======================================================================#
+    # generate landmarks coordinates at which training images will be sampled
+    landmarkX, landmarkY = np.meshgrid(
+        np.linspace(
+            0, imageSize[1], landmarkGrid[0] + 2
+        )[1:-1],
+        np.linspace(
+            0, imageSize[2], landmarkGrid[1] + 2
+        )[1:-1]
     )
-    NT = scipy.array([math.norm(n) for n in NT])
-    return NT
+    landmarkCoords = np.vstack([
+        np.ones(landmarkGrid[0] * landmarkGrid[1]) * imageSize[0] / 2,
+        landmarkX.ravel(),
+        landmarkY.ravel()
+    ]).T
 
+    # generate landmark normal vectors along which training images will be
+    # sampled from landmarks
+    landmarkNormals = np.array([[1.0, 0.0, 0.0], ] * landmarkCoords.shape[0])
 
-# function to fit landmarks to their predicted positions by a rigid-body
-# registration 
-def fitterRigid(data, x0, weights, landmarkIndices=None, xtol=1e-6, maxfev=0, verbose=1):
-    """ 
-    least-squares fits for tx,ty,tz,rx,ry,rz to transform points in data 
-    to points in target. Points in data and target are assumed to 
-    correspond by order
-    """
+    # create a list of 3-tuples each containing an image, its landmark coords,
+    # and its landmark normals. This is fed to the ASM trainer.
+    trainingSamples = []
+    for i in range(nImages):
+        s = makeScan(imageSize, int1Mean, int2Mean, intMeanSD, intSD)
+        trainingSamples.append((s, landmarkCoords, landmarkNormals))
 
-    def obj(x):
-        coords = transform3D.transformRigid3DAboutCoM(landmarkCoordsT, x)
-        d = ((data - coords) ** 2.0).sum(1)
-        return d
+    # initialise and run training instance
+    asmTrainer = ASM.TrainASMPPCs(ND, NLim, False, False)
+    asmTrainer.setTrainingSamples(trainingSamples, landmarkCoords.shape[0])
+    asmTrainer.sampleTrainingImages()
+    asmTrainer.trainPPCs()
 
-    x0 = scipy.array(x0)
-    if verbose:
-        rms0 = scipy.sqrt(obj(x0).mean())
+    # plot the mean sample gradient at each landmark
+    dPMeans = np.array([pc.getMean() for pc in asmTrainer.PPCs.L])
+    if has_plot:
+        plotPMulti(dPMeans, (3, 3))
+    dPPCs = asmTrainer.PPCs
 
-    xOpt = leastsq(obj, x0, xtol=xtol, maxfev=maxfev, epsfcn=1e-5)[0]
+    # Define functions that the asm segmentation will call on to provide
+    # and update landmark information
 
-    if verbose:
-        rmsOpt = scipy.sqrt(obj(xOpt).mean())
+    # function to return landmark coordinates
+    def coordEvaluator(t):
+        # rigid transform
+        return transform3D.transformRigid3DAboutCoM(landmarkCoordsT, t)
+
+    # function to return landmark normal vectors
+    def normalEvaluator(t):
+        # rigid transform
+        NT = transform3D.transformRigid3D(
+            landmarkNormalsT,
+            np.hstack([0, 0, 0, t[3:]])
+        )
+        NT = np.array([math.norm(n) for n in NT])
+        return NT
+
+    # function to fit landmarks to their predicted positions by a rigid-body
+    # registration
+    def fitterRigid(data, x0, weights, landmarkIndices=None, xtol=1e-6, maxfev=0, verbose=1):
+        """
+        least-squares fits for tx,ty,tz,rx,ry,rz to transform points in data
+        to points in target. Points in data and target are assumed to
+        correspond by order
+        """
+
+        def obj(x):
+            coords = transform3D.transformRigid3DAboutCoM(landmarkCoordsT, x)
+            d = ((data - coords) ** 2.0).sum(1)
+            return d
+
+        x0 = np.array(x0)
+        if verbose:
+            rms0 = np.sqrt(obj(x0).mean())
+
+        xOpt = leastsq(obj, x0, xtol=xtol, maxfev=maxfev, epsfcn=1e-5)[0]
+
+        rmsOpt = np.sqrt(obj(xOpt).mean())
         sdOpt = obj(xOpt).std()
 
-    return xOpt, rmsOpt, sdOpt
+        return xOpt, rmsOpt, sdOpt
 
+    # ======================================================================#
+    # segmentation                                                         #
+    # ======================================================================#
+    # displace landmarks by a rigid transform
+    segScan = makeScan(segImageSize, int1Mean, int2Mean, intMeanSD, intSD)
+    landmarkCoordsT = transform3D.transformRigid3DAboutCoM(
+        landmarkCoords,
+        segLandmarkT
+    )
+    landmarkNormalsT = transform3D.transformRigid3D(
+        landmarkNormals,
+        np.hstack([0, 0, 0, segLandmarkT[3:]])
+    )
+    landmarkNormalsT = np.array([math.norm(n) for n in landmarkNormalsT])
 
-# initialise asm segmentation instance
-asmParams = ASM.ASMSegmentationParams(GD=landmarkGrid,
-                                      ND=ND,
-                                      NLim=NLim,
-                                      NPad=NPad,
-                                      minPassFrac=minPassFrac,
-                                      matchMode=matchmode)
-asm = ASM.ASMSegmentation(params=asmParams)
-asm.setImage(segScan)
-asm.setProfilePC(dPPCs)
-asm.setMeshFitter(fitterRigid)
-asm.setMeshCoordinatesEvaluator(coordEvaluator)
-asm.setMeshNormalEvaluator(normalEvaluator)
-# define indices of landmarks that are a part of an 'element'
-# predictions of landmarks belonging to an element are filtered
-# to remove outliers
-asm.setElementXIndices([scipy.arange(landmarkGrid[0] * landmarkGrid[1]), ])
+    # initialise asm segmentation instance
+    asmParams = ASM.ASMSegmentationParams(GD=landmarkGrid,
+                                          ND=ND,
+                                          NLim=NLim,
+                                          NPad=NPad,
+                                          minPassFrac=minPassFrac,
+                                          matchMode=matchmode)
+    asm = ASM.ASMSegmentation(params=asmParams)
+    asm.setImage(segScan)
+    asm.setProfilePC(dPPCs)
+    asm.setMeshFitter(fitterRigid)
+    asm.setMeshCoordinatesEvaluator(coordEvaluator)
+    asm.setMeshNormalEvaluator(normalEvaluator)
+    # define indices of landmarks that are a part of an 'element'
+    # predictions of landmarks belonging to an element are filtered
+    # to remove outliers
+    asm.setElementXIndices([np.arange(landmarkGrid[0] * landmarkGrid[1]), ])
 
-# Initial rigid-body transform to landmarks
-x0 = [0, 0, 0, 0, 0, 0]
+    # Initial rigid-body transform to landmarks
+    x0 = [0, 0, 0, 0, 0, 0]
 
-# run segmentation
-segTOpt, segData, segW, segLandmarkMask, \
-rmsFinal, sdFinal, cFrac, m, M, meshParamsHistory = asm.segment(x0, verbose)
-landmarkCoordsFit = transform3D.transformRigid3DAboutCoM(landmarkCoordsT, segTOpt)
+    # run segmentation
+    segTOpt, segData, segW, segLandmarkMask, \
+    rmsFinal, sdFinal, cFrac, m, M, meshParamsHistory = asm.segment(x0, verbose)
+    landmarkCoordsFit = transform3D.transformRigid3DAboutCoM(landmarkCoordsT, segTOpt)
 
-# recover the points along each profile sampled based on initial positions 
-profileSamplingPoints = ASM.genSamplingPoints(
-    landmarkCoordsT,
-    landmarkNormalsT,
-    ND,
-    NLim
-)
-
-if has_mayavi:
-    # visualise in 3D
-    V = fieldvi.Fieldvi()
-    # the segmentation image
-    V.addImageVolume(segScan.I, 'segImage')
-    # initial landmark coordinates
-    V.addData(
-        'initial landmarks',
+    # recover the points along each profile sampled based on initial positions
+    profileSamplingPoints = ASM.genSamplingPoints(
         landmarkCoordsT,
-        renderArgs={'mode': 'sphere', 'scale_factor': 0.5, 'color': (0, 0, 1)}
-    )
-    # final predicted landmark positions, before rigid-body registration
-    V.addData(
-        'seg landmarks',
-        segData,
-        renderArgs={'mode': 'sphere', 'scale_factor': 0.5, 'color': (1, 0, 0)}
-    )
-    # final landmark positions, after rigid-body registration
-    V.addData(
-        'fitted landmarks',
-        landmarkCoordsFit,
-        renderArgs={'mode': 'sphere', 'scale_factor': 0.5, 'color': (0, 1, 0)}
-    )
-    # profile sampling points based on initial landmark positions
-    V.addData(
-        'initial sampling points',
-        scipy.vstack(profileSamplingPoints),
-        renderArgs={'mode': 'sphere', 'scale_factor': 0.1}
+        landmarkNormalsT,
+        ND,
+        NLim
     )
 
-    V.configure_traits()
+    if has_mayavi:
+        # visualise in 3D
+        V = fieldvi.Fieldvi()
+        # the segmentation image
+        V.addImageVolume(segScan.I, 'segImage')
+        # initial landmark coordinates
+        V.addData(
+            'initial landmarks',
+            landmarkCoordsT,
+            renderArgs={'mode': 'sphere', 'scale_factor': 0.5, 'color': (0, 0, 1)}
+        )
+        # final predicted landmark positions, before rigid-body registration
+        V.addData(
+            'seg landmarks',
+            segData,
+            renderArgs={'mode': 'sphere', 'scale_factor': 0.5, 'color': (1, 0, 0)}
+        )
+        # final landmark positions, after rigid-body registration
+        V.addData(
+            'fitted landmarks',
+            landmarkCoordsFit,
+            renderArgs={'mode': 'sphere', 'scale_factor': 0.5, 'color': (0, 1, 0)}
+        )
+        # profile sampling points based on initial landmark positions
+        V.addData(
+            'initial sampling points',
+            np.vstack(profileSamplingPoints),
+            renderArgs={'mode': 'sphere', 'scale_factor': 0.1}
+        )
+
+        V.configure_traits()
+
+
+if __name__ == '__main__':
+    main()

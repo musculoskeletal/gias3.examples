@@ -12,6 +12,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ===============================================================================
 """
 
+from numpy import array, newaxis, zeros, cos, sin, linspace, hstack, arange, meshgrid, vstack
+
 from gias2.fieldwork.field import ensemble_field_function as EFF
 from gias2.fieldwork.field import geometric_field as GF
 from gias2.fieldwork.field.topology import element_types
@@ -19,8 +21,9 @@ from gias2.visualisation import fieldvi
 
 mlab = GF.mlab
 
+
 # quartic line
-if 0:
+def quartic_line():
     F = EFF.ensemble_field_function('line', 1, debug=0)
     F.set_basis({'line5l': 'line_L4'})
     F.set_new_mesh('quartic_line')
@@ -44,9 +47,10 @@ if 0:
     V.configure_traits()
     V.scene.background = (1, 1, 1)
 
+
 # ======================================================================#
 # quartic quad
-if 0:
+def quartic_quad():
     F = EFF.ensemble_field_function('quad', 2, debug=0)
     F.set_basis({'quad55': 'quad_L4_L4'})
     F.set_new_mesh('quartic_quad')
@@ -86,12 +90,12 @@ if 0:
                             nNodesElemMap, elemBasisMap,
                             renderArgs={'color': (0.6, 0.6, 0.6), 'tube_radius': 0.25, 'tube_sides': 12})
 
+
 # ======================================================================#
 # quartic quad 4-elements
-if 1:
+def quartic_quad_4_elements():
     def z(x, y):
         return 5 * cos(x / 10) + 5 * sin(y / 10)
-
 
     def makeElemParams(xmin, xmax, ymin, ymax):
         X = linspace(xmin, xmax, 5)
@@ -99,7 +103,6 @@ if 1:
         Y = linspace(ymin, ymax, 5).repeat(5)
         Z = z(X, Y)
         return array([X, Y, Z])[:, :, newaxis]
-
 
     F = EFF.ensemble_field_function('quad', 2, debug=0)
     F.set_basis({'quad55': 'quad_L4_L4'})
@@ -145,9 +148,10 @@ if 1:
     analyticData = vstack([XX, YY, ZZ]).T
     V.addData('analytic', analyticData, renderArgs={'mode': 'point', 'color': (0, 0, 1)})
 
+
 # ======================================================================#
 # quartic tri
-if 0:
+def quartic_tri():
     def z(x, y):
         return 5 * cos(x / 10) + 5 * sin(y / 10)
 

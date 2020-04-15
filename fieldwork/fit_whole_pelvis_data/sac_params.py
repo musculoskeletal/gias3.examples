@@ -1,4 +1,4 @@
-import scipy
+import numpy
 
 alignObjMode = 'DPEP'
 alignEPD = [3, 3]
@@ -10,7 +10,7 @@ HMFHostSobD = [10, 10, 10]
 HMFHostSobW = 1e-3
 HMFSlaveEPD = [10, 10]
 HMFSlaveSobD = [10, 10]
-HMFSlaveSobW = scipy.array((1, 1, 1, 1, 2)) * 1e-5
+HMFSlaveSobW = numpy.array((1, 1, 1, 1, 2)) * 1e-5
 HMFSlaveNormD = 10
 HMFSlaveNormW = 100.0
 
@@ -27,7 +27,7 @@ PCFMode0Offset = 0.0
 meshFitObjMode = 'DPEP'
 meshFitEPD = 10.0
 meshFitSobD = [10, 10]
-meshFitSobW = scipy.array((1, 1, 1, 1, 2)) * 1e-8
+meshFitSobW = numpy.array((1, 1, 1, 1, 2)) * 1e-8
 meshFitND = 10
 meshFitNW = 50.0
 meshFitXtol = 1e-5

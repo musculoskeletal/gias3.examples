@@ -19,9 +19,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 _descStr = "Script for viewing element numbers and boundaries on a fieldwork model."
 
 import argparse
-from argparse import RawTextHelpFormatter
-
 import sys
+from argparse import RawTextHelpFormatter
 
 from gias2.fieldwork.field import geometric_field
 
@@ -81,27 +80,31 @@ def main(args):
 
 
 # =============================================================================#
-parser = argparse.ArgumentParser(
-    description=_descStr,
-    formatter_class=RawTextHelpFormatter,
-)
-parser.add_argument('geof',
-                    help='.geof file path')
-parser.add_argument('ens',
-                    help='.ens file path')
-parser.add_argument('mesh',
-                    help='.mesh file path')
-parser.add_argument('--disc',
-                    action='store',
-                    default='8x8',
-                    help='mesh discretisation')
-parser.add_argument('--opacity',
-                    action='store',
-                    default='0.8',
-                    help='mesh opacity')
+def make_parser():
+    parser = argparse.ArgumentParser(
+        description=_descStr,
+        formatter_class=RawTextHelpFormatter,
+    )
+    parser.add_argument('geof',
+                        help='.geof file path')
+    parser.add_argument('ens',
+                        help='.ens file path')
+    parser.add_argument('mesh',
+                        help='.mesh file path')
+    parser.add_argument('--disc',
+                        action='store',
+                        default='8x8',
+                        help='mesh discretisation')
+    parser.add_argument('--opacity',
+                        action='store',
+                        default='0.8',
+                        help='mesh opacity')
+    return parser
+
 
 # =============================================================================#
 
 if __name__ == '__main__':
+    parser = make_parser()
     args = parser.parse_args()
     main(args)

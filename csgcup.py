@@ -15,18 +15,23 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from gias2.mesh import csgtools
 from gias2.mesh import simplemesh
 
-# cup = csgtools.cup([5,10,0], [1,0,1], 35.0, 38.0)
-cup = csgtools.cup([76.55971436, 19.41941043, 1893.45958191],
-                   [-0.65862822, 0.1764789, 0.73148074],
-                   27.600647776, 31.1006477763)
-v, t, n = csgtools.get_csg_triangles(cup, True, True)
-cupmesh = simplemesh.SimpleMesh(v, t)
-cupmesh.disp()
+def main():
+    # cup = csgtools.cup([5,10,0], [1,0,1], 35.0, 38.0)
+    cup = csgtools.cup([76.55971436, 19.41941043, 1893.45958191],
+                       [-0.65862822, 0.1764789, 0.73148074],
+                       27.600647776, 31.1006477763)
+    v, t, n = csgtools.get_csg_triangles(cup, True, True)
+    cupmesh = simplemesh.SimpleMesh(v, t)
+    cupmesh.disp()
 
-# cyn = csgtools.CSG.cylinder(start=[0,0,0],
-#                             end=[10,10,0],
-#                             radius=3.0
-#                             )
-# v,t,n = csgtools.get_csg_triangles(cyn, True, True)
-# cynmesh = simplemesh_tools.simpleMesh(v, t)
-# cynmesh.disp()
+    # cyn = csgtools.CSG.cylinder(start=[0,0,0],
+    #                             end=[10,10,0],
+    #                             radius=3.0
+    #                             )
+    # v,t,n = csgtools.get_csg_triangles(cyn, True, True)
+    # cynmesh = simplemesh_tools.simpleMesh(v, t)
+    # cynmesh.disp()
+
+
+if __name__ == '__main__':
+    main()

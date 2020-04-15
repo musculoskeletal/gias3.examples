@@ -13,8 +13,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ===============================================================================
 """
 
-import numpy as np
 import time
+
+import numpy as np
 
 from gias2.image_analysis import integralimage as II
 # import pyximport; pyximport.install()
@@ -29,14 +30,19 @@ def timeTest(func, arg, it):
     return dt, x
 
 
-image = np.arange(1000, dtype=int).reshape((10, 10, 10))
-dtc, intImageC = timeTest(IIC.makeIntegralArray3, image, 100)
-dt, intImage = timeTest(II.makeIntegralArray3, image, 100)
+def main():
+    image = np.arange(1000, dtype=int).reshape((10, 10, 10))
+    dtc, intImageC = timeTest(IIC.makeIntegralArray3, image, 100)
+    dt, intImage = timeTest(II.makeIntegralArray3, image, 100)
 
-if np.all(intImage == intImageC):
-    print('results match')
-else:
-    print('results UNMATCHED')
+    if np.all(intImage == intImageC):
+        print('results match')
+    else:
+        print('results UNMATCHED')
 
-print('python time:', dt)
-print('cython time:', dtc)
+    print('python time:', dt)
+    print('cython time:', dtc)
+
+
+if __name__ == '__main__':
+    main()
