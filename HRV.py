@@ -11,6 +11,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ===============================================================================
 """
+import logging
 
 import scipy as sp
 
@@ -25,6 +26,8 @@ except ImportError:
 
 
 # import StringIO, pydot
+log = logging.getLogger(__name__)
+
 
 def main():
     # ===============================================================================#
@@ -84,9 +87,9 @@ def main():
         predictedPTest1 = sp.array(clf1.predict(PTestFeatures)) + P1
         predictedPTest2 = sp.array(clf2.predict(PTestFeatures)) + P1
         predictedPTest3 = sp.array(clf3.predict(PTestFeatures)) + P1
-        print(predictedPTest1.mean(0))
-        print(predictedPTest2.mean(0))
-        print(predictedPTest3.mean(0))
+        log.debug(predictedPTest1.mean(0))
+        log.debug(predictedPTest2.mean(0))
+        log.debug(predictedPTest3.mean(0))
 
     # ===============================================================================#
     # save and load
@@ -101,9 +104,9 @@ def main():
         predictedP21 = someTrees[0].predict(P2Features) + P
         predictedP22 = someTrees[1].predict(P2Features) + P
         predictedP23 = someTrees[2].predict(P2Features) + P
-        print(predictedP21)
-        print(predictedP22)
-        print(predictedP23)
+        log.debug(predictedP21)
+        log.debug(predictedP22)
+        log.debug(predictedP23)
 
     # ===============================================================================#
     if has_mayavi:

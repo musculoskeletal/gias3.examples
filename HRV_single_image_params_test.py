@@ -11,6 +11,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ===============================================================================
 """
+import logging
 
 import scipy as sp
 from sklearn.ensemble import ExtraTreesRegressor
@@ -28,6 +29,8 @@ try:
     has_plot = True
 except ImportError:
     has_plot = False
+
+log = logging.getLogger(__name__)
 
 
 def paramsTest(trainingImage, P1, P2, windowSize, dMax, nSamples, nTrees, minSamplesSplit, haarMode, windowSizeVar=None,
@@ -85,7 +88,7 @@ def mainParamTest():
                 logStr = '%(nS)5i, %(nT)5i, %(minSS)5i, %(err)8.6f, %(std)8.6f\n' % {'nS': nSamples, 'nT': nTrees,
                                                                                      'minSS': minSamplesSplit,
                                                                                      'err': err, 'std': errstd}
-                print(logStr)
+                log.debug(logStr)
                 with open(logFile, 'a') as f:
                     f.write(logStr)
 
@@ -119,9 +122,9 @@ def getBestPerNSamples(data):
         minData = nData[minIndex]
         bests.append(minData)
         if len(minData) == 4:
-            print('%5i %5i %5i %6.5f' % tuple(minData))
+            log.debug('%5i %5i %5i %6.5f' % tuple(minData))
         elif len(minData) == 5:
-            print('%5i %5i %5i %6.5f %6.5f' % tuple(minData))
+            log.debug('%5i %5i %5i %6.5f %6.5f' % tuple(minData))
 
     return sp.array(bests)
 

@@ -12,7 +12,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ===============================================================================
 """
-
+import logging
 import time
 
 import numpy as np
@@ -20,6 +20,8 @@ import numpy as np
 from gias2.image_analysis import integralimage as II
 # import pyximport; pyximport.install()
 from gias2.image_analysis import integralimagec as IIC
+
+log = logging.getLogger(__name__)
 
 
 def timeTest(func, arg, it):
@@ -36,12 +38,12 @@ def main():
     dt, intImage = timeTest(II.makeIntegralArray3, image, 100)
 
     if np.all(intImage == intImageC):
-        print('results match')
+        log.info('results match')
     else:
-        print('results UNMATCHED')
+        log.info('results UNMATCHED')
 
-    print('python time:', dt)
-    print('cython time:', dtc)
+    log.info('python time:', dt)
+    log.info('cython time:', dtc)
 
 
 if __name__ == '__main__':

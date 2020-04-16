@@ -11,6 +11,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ===============================================================================
 """
+import logging
 
 import numpy
 from scipy.optimize import fmin
@@ -27,6 +28,8 @@ try:
     has_mayavi = True
 except ImportError:
     has_mayavi = False
+
+log = logging.getLogger(__name__)
 
 
 def mag(V):
@@ -99,7 +102,7 @@ def fit(theta, nD):
     def fitObj(x):
         x = x.reshape((3, -1, 1))
         err = NS(x)
-        print(err[0])
+        log.debug(err[0])
         return err
 
     pOpt = GFF.leastsq(fitObj, G.get_field_parameters().ravel())[0]
@@ -121,7 +124,7 @@ def fitRotate(theta, nD):
     def fitObj(a):
         GParams[:, elem1Nodes, :] = makeElemParams(50, 100, 0, 50, a)
         err = NS(GParams)[0]
-        print(err)
+        log.debug(err)
         return err
 
     thetaOpt = fmin(fitObj, theta)[0]
@@ -137,7 +140,7 @@ def mesh2DPlot():
     try:
         from matplotlib import pyplot as plot
     except ImportError:
-        print('matplotlib not found')
+        log.info('matplotlib not found')
         return
 
     angles = numpy.linspace(0.0, 360, 20) * numpy.pi / 180

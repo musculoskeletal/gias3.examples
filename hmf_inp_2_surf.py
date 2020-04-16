@@ -34,6 +34,7 @@ Last Modified: 17-03-2018
 """
 
 import argparse
+import logging
 import os
 
 os.environ['ETS_TOOLKIT'] = 'qt4'
@@ -47,6 +48,8 @@ from gias2.visualisation import fieldvi
 from gias2.mesh import vtktools, inp
 from gias2.common import transform3D
 from gias2.registration import alignment_fitting as af
+
+log = logging.getLogger(__name__)
 
 
 def make_parser():
@@ -148,7 +151,7 @@ def main():
         t0=np.array(init_trans + init_rot),
         outputErrors=1
     )
-    print('rigid-body registration error: {}'.format(reg1_errors[1]))
+    log.info('rigid-body registration error: {}'.format(reg1_errors[1]))
     # add isotropic scaling to rigid registration
     reg2_T, source_surf_points_reg2, reg2_errors = af.fitDataRigidScaleDPEP(
         source_surf_points,
@@ -158,7 +161,7 @@ def main():
         t0=np.hstack([reg1_T, 1.0]),
         outputErrors=1
     )
-    print('rigid-body + scaling registration error: {}'.format(reg2_errors[1]))
+    log.info('rigid-body + scaling registration error: {}'.format(reg2_errors[1]))
 
     # apply same transforms to the volume nodes
     source_mesh.nodes = transform3D.transformRigidScale3DAboutP(

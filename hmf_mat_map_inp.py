@@ -19,6 +19,8 @@ Fernandez, J. W., Mithraratne, P., Thrupp, S. F., Tawhai, M. H., & Hunter, P. J.
 (2004). Anatomically based geometric modelling of the musculo-skeletal system
 and other organs. Biomech Model Mechanobiol, 2(3), 139-155.
 """
+import logging
+
 import numpy as np
 from scipy.spatial import cKDTree
 
@@ -33,6 +35,8 @@ from gias2.visualisation import fieldvi
 """
 Test INP reading and writing
 """
+
+log = logging.getLogger(__name__)
 
 
 def calcElemCentroids(mesh):
@@ -89,15 +93,15 @@ outputFilename = 'data/hmf_map_inp/output/IlliumLTet_out.inp'
 def main():
     reader = inp.InpReader(inputFilename)
     header = reader.readHeader()
-    print('header: ' + ' '.join(header))
+    log.info('header: ' + ' '.join(header))
     meshnames = reader.readMeshNames()
-    print('mesh names: ' + ', '.join(meshnames))
+    log.info('mesh names: ' + ', '.join(meshnames))
     mesh = reader.readMesh(meshnames[0])
-    print(mesh.getNumberOfElems())
-    print(mesh.getNumberOfNodes())
-    # print(mesh.getNode(10))
-    # print(mesh.getElem(10))
-    # print(mesh.getElemType())
+    log.info(mesh.getNumberOfElems())
+    log.info(mesh.getNumberOfNodes())
+    # log.info(mesh.getNode(10))
+    # log.info(mesh.getElem(10))
+    # log.info(mesh.getElemType())
 
     # convert INP mesh object to tetgen mesh object
     target_tet = inp_mesh_2_tet(mesh)
@@ -133,7 +137,7 @@ def main():
         t0=np.array(init_trans + init_rot),
         outputErrors=1
     )
-    print('rigid-body registration error: {}'.format(reg1_errors[1]))
+    log.info('rigid-body registration error: {}'.format(reg1_errors[1]))
     # add isotropic scaling to rigid registration
     reg2_T, source_surf_points_reg2, reg2_errors = af.fitDataRigidScaleDPEP(
         source_surf_points,
@@ -143,7 +147,7 @@ def main():
         t0=np.hstack([reg1_T, 1.0]),
         outputErrors=1
     )
-    print('rigid-body + scaling registration error: {}'.format(reg2_errors[1]))
+    log.info('rigid-body + scaling registration error: {}'.format(reg2_errors[1]))
 
     # apply same transforms to the volume nodes
     source_tet.nodes = transform3D.transformRigidScale3DAboutP(

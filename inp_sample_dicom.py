@@ -19,6 +19,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 
 import argparse
+import logging
 import os
 
 import sys
@@ -34,6 +35,7 @@ import numpy as np
 from gias2.image_analysis.image_tools import Scan
 from gias2.mesh import inp
 
+log = logging.getLogger(__name__)
 
 # E_BINS = np.linspace(50, 1550, 16)  # in MPa
 # E_BIN_VALUES = np.hstack([0.1, np.linspace(100, 1500, 15), 20000])  # in MPa
@@ -315,7 +317,7 @@ def main():
             v.configure_traits()
             v.scene.background = (0, 0, 0)
         else:
-            print('Visualisation error: cannot import mayavi')
+            log.info('Visualisation error: cannot import mayavi')
 
 
 if __name__ == '__main__':

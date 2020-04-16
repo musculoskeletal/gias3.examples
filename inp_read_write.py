@@ -11,9 +11,11 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ===============================================================================
 """
+import logging
 
 from gias2.mesh import inp
 
+log = logging.getLogger(__name__)
 inputFilename = 'data/prox_femur.inp'
 outputFilename = 'data/prox_femur_out.inp'
 
@@ -21,15 +23,15 @@ outputFilename = 'data/prox_femur_out.inp'
 def main():
     reader = inp.InpReader(inputFilename)
     header = reader.readHeader()
-    print(('header: ' + ' '.join(header)))
+    log.info(('header: ' + ' '.join(header)))
     meshnames = reader.readMeshNames()
-    print(('mesh names: ' + ', '.join(meshnames)))
+    log.info(('mesh names: ' + ', '.join(meshnames)))
     mesh = reader.readMesh(meshnames[0])
-    print((mesh.getNumberOfElems()))
-    print((mesh.getNumberOfNodes()))
-    print((mesh.getNode(10)))
-    print((mesh.getElem(10)))
-    print((mesh.getElemType()))
+    log.info((mesh.getNumberOfElems()))
+    log.info((mesh.getNumberOfNodes()))
+    log.info((mesh.getNode(10)))
+    log.info((mesh.getElem(10)))
+    log.info((mesh.getElemType()))
 
     writer = inp.InpWriter(outputFilename)
     writer.addHeader(header[0])

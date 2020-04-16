@@ -14,6 +14,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ===============================================================================
 """
+import logging
 
 _descStr = """Script for calculating the distances between 2 surfaces.
 Author: Ju Zhang
@@ -63,12 +64,14 @@ from scipy.spatial.distance import jaccard, dice, directed_hausdorff
 
 from gias2.mesh import vtktools
 
+log = logging.getLogger(__name__)
+
 try:
     from gias2.visualisation import fieldvi
 
     can_visual = True
 except (ImportError, NotImplementedError):
-    print('no visualisation available')
+    log.info('no visualisation available')
     can_visual = False
 
 
@@ -254,7 +257,7 @@ def main():
         testUnitScaling
     )
     for k, v in sorted(results.items()):
-        print('{}: {}'.format(k, v))
+        log.info('{}: {}'.format(k, v))
 
     if args.outpath is not None:
         testName = path.splitext(path.split(args.testPath)[1])[0]

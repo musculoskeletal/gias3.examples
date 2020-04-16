@@ -15,6 +15,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ===============================================================================
 """
+import logging
 
 _descStr = "Script for viewing element numbers and boundaries on a fieldwork model."
 
@@ -24,10 +25,12 @@ from argparse import RawTextHelpFormatter
 
 from gias2.fieldwork.field import geometric_field
 
+log = logging.getLogger(__name__)
+
 try:
     from gias2.visualisation import fieldvi
 except ImportError:
-    print('no visualisation available, quitting.')
+    log.info('no visualisation available, quitting.')
     sys.exit(1)
 
 

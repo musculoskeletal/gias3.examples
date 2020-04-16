@@ -11,12 +11,15 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ===============================================================================
 """
+import logging
 
 import scipy
 from scipy.spatial import cKDTree
 
 from gias2.mesh import vtktools
 from gias2.visualisation import fieldvi
+
+log = logging.getLogger(__name__)
 
 
 def loadpoly(filename):
@@ -43,7 +46,7 @@ def main():
     distMin = cDist.min()
 
     # print results
-    print('Distance Summary:\n mean: %(u)8.6f\n S.D.: %(sd)8.6f\n RMS: %(rms)8.6f\n max: %(max)8.6f\n min: %(min)8.6f' \
+    log.info('Distance Summary:\n mean: %(u)8.6f\n S.D.: %(sd)8.6f\n RMS: %(rms)8.6f\n max: %(max)8.6f\n min: %(min)8.6f' \
           % {'u': distMean, 'sd': distSD, 'rms': distRMS, 'max': distMax, 'min': distMin})
 
     # render

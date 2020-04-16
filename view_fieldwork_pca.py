@@ -1,7 +1,7 @@
 """
 Example script for viewing a femur shape model.
 """
-
+import logging
 from os import path
 
 import numpy as np
@@ -10,6 +10,8 @@ from gias2.fieldwork.field import geometric_field
 from gias2.learning import PCA
 from gias2.mesh import vtktools
 from gias2.visualisation import fieldvi
+
+log = logging.getLogger(__name__)
 
 # ===============================================#
 # text file containing the name of each training set subject
@@ -43,9 +45,9 @@ def main():
     # ==============================================#
     # print the % variance for each PC
     componentVar = pc.getNormSpectrum()
-    print('PC Percentage Significance')
+    log.info('PC Percentage Significance')
     for i in range(plotPCs):
-        print('pc%d: %4.2f%%' % (i + 1, componentVar[i] * 100))
+        log.info('pc%d: %4.2f%%' % (i + 1, componentVar[i] * 100))
 
     # plot the % variance for each PC
     plotTitle = 'PC Significance'
