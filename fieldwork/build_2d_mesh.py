@@ -28,7 +28,7 @@ from gias2.mesh import simplemesh
 def main():
     # load surface data
     dataFilename = 'data/BN00105_E15006_S01_mc1 8_001.wrl'
-    s = simplemesh.vrml2SimpleMesh(dataFilename)[0]
+    s = simplemesh.vrml_2_simple_mesh(dataFilename)[0]
     data = s.v / 10000.0
 
     # mesh filenames

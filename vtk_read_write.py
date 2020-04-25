@@ -29,7 +29,7 @@ output_filename_vtp = 'outputs/autoCarpal1_outer_stl.vtp'
 
 def main():
     # the example geometry
-    mesh = simplemesh.stl2SimpleMesh(input_filename)
+    mesh = simplemesh.stl_2_simple_mesh(input_filename)
 
     # create random colours for vertices
     vcolours = np.random.random_integers(0, 255, mesh.v.shape[0] * 3).reshape([-1, 3])

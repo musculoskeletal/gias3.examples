@@ -121,7 +121,7 @@ def main(scan):
 
     # ========================#
     # load wrl file with data clouds of all 3 hip bones
-    SMs = simplemesh.vrml2SimpleMesh(dataFileStr % {'scan': scan})
+    SMs = simplemesh.vrml_2_simple_mesh(dataFileStr % {'scan': scan})
     CoMsX = [SMs[0].v.mean(0)[0], SMs[2].v.mean(0)[0], SMs[4].v.mean(0)[0]]
     boneOrder = scipy.argsort(CoMsX) * 2
     SMLH, dataLH = SMs[boneOrder[2]], SMs[boneOrder[2]].v  # L and R switched between mine and marco's segmentations

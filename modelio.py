@@ -21,7 +21,7 @@ filename = 'data/2008_1741_tibia_fibula.wrl'
 
 
 def main():
-    meshes = simplemesh.vrml2SimpleMesh(filename)[:2]
+    meshes = simplemesh.vrml_2_simple_mesh(filename)[:2]
 
     # visualise models
     V = fieldvi.Fieldvi()
