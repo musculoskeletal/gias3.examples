@@ -37,9 +37,9 @@ import numpy as np
 from numpy import random
 from scipy.optimize import leastsq
 
-from gias2.common import transform3D, math
-from gias2.image_analysis import asm_segmentation as ASM
-from gias2.image_analysis import image_tools
+from gias3.common import transform3D, math
+from gias3.image_analysis import asm_segmentation as ASM
+from gias3.image_analysis import image_tools
 
 try:
     from matplotlib import pyplot as plot
@@ -56,20 +56,20 @@ except ImportError:
     has_mayavi = False
 
 
-def plotPMulti(P, plotFormat, err=None, PI=None):
-    nPlots = int(plotFormat[0]) * int(plotFormat[1])
+def plotPMulti(P, plot_format, err=None, PI=None):
+    nPlots = int(plot_format[0]) * int(plot_format[1])
     if PI is None:
         PI = np.linspace(0, P.shape[0] - 1, nPlots + 2).astype(int)[1:-1]
     fig = plot.figure()
     x = np.arange(P.shape[1])
     if err is not None:
         for i, pi in enumerate(PI):
-            plot.subplot(plotFormat[0], plotFormat[1], i + 1)
+            plot.subplot(plot_format[0], plot_format[1], i + 1)
             plot.errorbar(x, P[pi], yerr=err[pi], linewidth=3)
             plot.title(str(pi))
     else:
         for i, pi in enumerate(PI):
-            plot.subplot(plotFormat[0], plotFormat[1], i + 1)
+            plot.subplot(plot_format[0], plot_format[1], i + 1)
             plot.plot(x, P[pi], linewidth=3)
             plot.title(str(pi))
 
@@ -77,20 +77,20 @@ def plotPMulti(P, plotFormat, err=None, PI=None):
     return fig
 
 
-def makeScan(imageSize, int1Mean, int2Mean, intMeanSD, intSD):
+def makeScan(image_size, int1_mean, int2_mean, int_mean_sd, int_sd):
     """ generate a 3D image array with a bright half and a dark half.
     Mean intensity of the dark and bright half are generated following a 
     Gaussian distribution with mean int1Mean and int2Mean, respectively,
     and a standard deviation of intMeanSD. Gaussian noise of s.d. intSD is 
     then added to each voxel. 
     """
-    int1 = random.normal(int1Mean, intMeanSD)
-    int2 = random.normal(int2Mean, intMeanSD)
+    int1 = random.normal(int1_mean, int_mean_sd)
+    int2 = random.normal(int2_mean, int_mean_sd)
 
-    I = np.zeros(imageSize)
-    halfX = imageSize[0] / 2
-    I[:halfX] = random.normal(int1Mean, intSD, I[:halfX].shape)
-    I[halfX:] = random.normal(int2Mean, intSD, I[:halfX].shape)
+    I = np.zeros(image_size)
+    halfX = image_size[0] / 2
+    I[:halfX] = random.normal(int1_mean, int_sd, I[:halfX].shape)
+    I[halfX:] = random.normal(int2_mean, int_sd, I[:halfX].shape)
 
     s = image_tools.Scan('test_image')
     s.setImageArray(I)
@@ -188,7 +188,7 @@ def main():
 
     # function to fit landmarks to their predicted positions by a rigid-body
     # registration
-    def fitterRigid(data, x0, weights, landmarkIndices=None, xtol=1e-6, maxfev=0, verbose=1):
+    def fitterRigid(data, x0, weights, landmark_indices=None, xtol=1e-6, maxfev=0, verbose=1):
         """
         least-squares fits for tx,ty,tz,rx,ry,rz to transform points in data
         to points in target. Points in data and target are assumed to

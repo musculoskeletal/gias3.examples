@@ -17,8 +17,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 import logging
 
-_descStr = "Script for viewing element numbers and boundaries on a fieldwork model."
-
 import argparse
 import sys
 from argparse import RawTextHelpFormatter
@@ -28,10 +26,13 @@ from gias3.fieldwork.field import geometric_field
 log = logging.getLogger(__name__)
 
 try:
-    from gias2.visualisation import fieldvi
+    from gias3.visualisation import fieldvi
 except ImportError:
     log.info('no visualisation available, quitting.')
     sys.exit(1)
+
+
+_descStr = "Script for viewing element numbers and boundaries on a fieldwork model."
 
 
 def _parse_disc(string):

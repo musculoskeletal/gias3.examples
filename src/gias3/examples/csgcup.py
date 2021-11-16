@@ -12,8 +12,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ===============================================================================
 """
 
-from gias2.mesh import csgtools
-from gias2.mesh import simplemesh
+from gias3.mesh import csgtools
+from gias3.mesh import simplemesh
+
 
 def main():
     # cup = csgtools.cup([5,10,0], [1,0,1], 35.0, 38.0)

@@ -35,19 +35,16 @@ Last Modified: 17-03-2018
 
 import argparse
 import logging
-import os
-
-os.environ['ETS_TOOLKIT'] = 'qt4'
 
 import numpy as np
 from scipy.spatial import cKDTree
-from gias2.fieldwork.field.tools import fitting_tools
-from gias2.fieldwork.field import geometric_field_fitter as GFF
-from gias2.fieldwork.field import geometric_field
-from gias2.visualisation import fieldvi
-from gias2.mesh import vtktools, inp
-from gias2.common import transform3D
-from gias2.registration import alignment_fitting as af
+from gias3.fieldwork.field.tools import fitting_tools
+from gias3.fieldwork.field import geometric_field_fitter as GFF
+from gias3.fieldwork.field import geometric_field
+from gias3.visualisation import fieldvi
+from gias3.mesh import vtktools, inp
+from gias3.common import transform3D
+from gias3.registration import alignment_fitting as af
 
 log = logging.getLogger(__name__)
 

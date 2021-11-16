@@ -24,13 +24,13 @@ import logging
 import numpy as np
 from scipy.spatial import cKDTree
 
-from gias2.common import transform3D
-from gias2.fieldwork.field import geometric_field
-from gias2.fieldwork.field import geometric_field_fitter as GFF
-from gias2.fieldwork.field.tools import fitting_tools
-from gias2.mesh import inp, tetgenoutput
-from gias2.registration import alignment_fitting as af
-from gias2.visualisation import fieldvi
+from gias3.common import transform3D
+from gias3.fieldwork.field import geometric_field
+from gias3.fieldwork.field import geometric_field_fitter as GFF
+from gias3.fieldwork.field.tools import fitting_tools
+from gias3.mesh import inp, tetgenoutput
+from gias3.registration import alignment_fitting as af
+from gias3.visualisation import fieldvi
 
 """
 Test INP reading and writing
@@ -135,7 +135,7 @@ def main():
         xtol=1e-6,
         sample=1000,
         t0=np.array(init_trans + init_rot),
-        outputErrors=1
+        output_errors=1
     )
     log.info('rigid-body registration error: {}'.format(reg1_errors[1]))
     # add isotropic scaling to rigid registration
@@ -145,7 +145,7 @@ def main():
         xtol=1e-6,
         sample=1000,
         t0=np.hstack([reg1_T, 1.0]),
-        outputErrors=1
+        output_errors=1
     )
     log.info('rigid-body + scaling registration error: {}'.format(reg2_errors[1]))
 
@@ -163,7 +163,6 @@ def main():
     # define some slave obj funcs
     target_tree = cKDTree(target_surf_points)
 
-
     # distance between each source point and its closest target point
     # this it is the fastest
     # should not be used if source has more geometry than target
@@ -171,14 +170,12 @@ def main():
         d = target_tree.query(x)[0]
         return d
 
-
     # distance between each target point and its closest source point
     # should not use if source has less geometry than target
     def slave_func_tpsp(x):
         sourcetree = cKDTree(x)
         d = sourcetree.query(target_surf_points)[0]
         return d
-
 
     # combination of the two funcs above
     # this gives the most accurate result
@@ -189,7 +186,6 @@ def main():
         d_tpsp = sourcetree.query(target_surf_points)[0]
         d_sptp = target_tree.query(x)[0]
         return np.hstack([d_tpsp, d_sptp])
-
 
     slave_func = slave_func_2way
 
@@ -211,7 +207,7 @@ def main():
     )[0]
     # make internal source node coordinate evaluator function
     eval_source_nodes_xi = geometric_field.makeGeometricFieldEvaluatorSparse(
-        host_mesh, [1, 1], matPoints=source_nodes_xi
+        host_mesh, [1, 1], mat_points=source_nodes_xi
     )
 
     # HMF
@@ -254,22 +250,22 @@ def main():
 
     # =============================================================#
     # view
-    v = fieldvi.Fieldvi()
-    v.addData('target surface', target_surf_points, renderArgs={'mode': 'point', 'color': (1, 0, 0)})
-    v.addData('source surface', source_surf_points, renderArgs={'mode': 'point'})
-    v.addData('source surface reg1', source_surf_points_reg1, renderArgs={'mode': 'point'})
-    v.addData('source surface reg2', source_surf_points_reg2, renderArgs={'mode': 'point'})
-    v.addData('source surface hmf', source_surf_points_hmf, renderArgs={'mode': 'point'})
-    v.addData('source nodes hmf', source_tet.nodes, renderArgs={'mode': 'point'})
+    v = fieldvi.FieldVi()
+    v.addData('target surface', target_surf_points, render_args={'mode': 'point', 'color': (1, 0, 0)})
+    v.addData('source surface', source_surf_points, render_args={'mode': 'point'})
+    v.addData('source surface reg1', source_surf_points_reg1, render_args={'mode': 'point'})
+    v.addData('source surface reg2', source_surf_points_reg2, render_args={'mode': 'point'})
+    v.addData('source surface hmf', source_surf_points_hmf, render_args={'mode': 'point'})
+    v.addData('source nodes hmf', source_tet.nodes, render_args={'mode': 'point'})
     v.addData('source elem centroids hmf',
               source_tet.volElemCentroids,
               scalar=source_mat,
-              renderArgs={'mode': 'point'}
+              render_args={'mode': 'point'}
               )
     v.addData('target elem centroids',
               target_tet.volElemCentroids,
               scalar=target_mat,
-              renderArgs={'mode': 'point'}
+              render_args={'mode': 'point'}
               )
 
     v.configure_traits()

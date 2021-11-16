@@ -16,6 +16,16 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 import logging
 
+import argparse
+from argparse import RawTextHelpFormatter
+from os import path
+
+import numpy as np
+from scipy.spatial import cKDTree
+from scipy.spatial.distance import jaccard, dice, directed_hausdorff
+
+from gias3.mesh import vtktools
+
 _descStr = """Script for calculating the distances between 2 surfaces.
 Author: Ju Zhang
 Last Modified: 2017-08-02
@@ -53,16 +63,6 @@ Things to note
     jaccard: 0.9563085399449036
 
 """
-
-import argparse
-from argparse import RawTextHelpFormatter
-from os import path
-
-import numpy as np
-from scipy.spatial import cKDTree
-from scipy.spatial.distance import jaccard, dice, directed_hausdorff
-
-from gias3.mesh import vtktools
 
 log = logging.getLogger(__name__)
 
