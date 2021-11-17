@@ -30,7 +30,7 @@ def quartic_line():
     F.create_elements('line5l', 1)
     F.map_parameters()
 
-    G = GF.geometric_field('line5', 3, ensemble_field_function=F)
+    G = GF.GeometricField('line5', 3, ensemble_field_function=F)
 
     x = array([0.0, 17.0, 25.0, 33.0, 50.0])
     y = array([0.0, 5.0, 13.0, 5.0, 0.0])
@@ -57,7 +57,7 @@ def quartic_quad():
     F.create_elements('quad55', 1)
     F.map_parameters()
 
-    G = GF.geometric_field('quad55', 3, ensemble_field_function=F)
+    G = GF.GeometricField('quad55', 3, ensemble_field_function=F)
 
     x1 = array([0.0, 8, 15.5, 22, 31.0]) - 15.5
     y1 = array([0.0, 8, 15.5, 22, 31.0]) - 15.5
@@ -108,7 +108,7 @@ def quartic_quad_4_elements():
     F.set_basis({'quad55': 'quad_L4_L4'})
     F.set_new_mesh('quartic_quad')
 
-    G = GF.geometric_field('quad55-4elem', 3, ensemble_field_function=F)
+    G = GF.GeometricField('quad55-4elem', 3, ensemble_field_function=F)
 
     element = element_types.create_element('quad55')
     G.add_element_with_parameters(element, makeElemParams(0, 50, 0, 50))
@@ -167,7 +167,7 @@ def quartic_tri():
     F.set_basis({'tri15': 'simplex_L4_L4'})
     F.set_new_mesh('quartic_tri')
     # ~ F.create_elements( 'tri55', 1 )
-    G = GF.geometric_field('tri15', 3, ensemble_field_function=F)
+    G = GF.GeometricField('tri15', 3, ensemble_field_function=F)
 
     element = element_types.create_element('tri15')
     G.add_element_with_parameters(element, makeTriParams(0, 100, 0, 100))

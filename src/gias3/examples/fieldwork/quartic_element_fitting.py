@@ -88,7 +88,7 @@ def main():
         F.set_new_mesh('quartic_quad')
 
         # initialise the 3-D geometric field in which the 2-D field in embedded
-        G = GF.geometric_field('quad55-4elem', 3, ensemble_field_function=F)
+        G = GF.GeometricField('quad55-4elem', 3, ensemble_field_function=F)
 
         # add elements
         element = element_types.create_element('quad55')
@@ -109,7 +109,7 @@ def main():
         F = EFF.EnsembleFieldFunction('tri', 2, debug=0)
         F.set_basis({'tri15': 'simplex_L4_L4'})
         F.set_new_mesh('quartic_tri')
-        G = GF.geometric_field('tri15-4elem', 3, ensemble_field_function=F)
+        G = GF.GeometricField('tri15-4elem', 3, ensemble_field_function=F)
 
         # add elements
         element = element_types.create_element('tri15')
@@ -178,7 +178,7 @@ def main():
         # V.drawElementBoundaries('fitted mesh', [50,],
         #                       GF.makeGeometricFieldEvaluatorSparse,
         #                       nNodesElemMap, elemBasisMap,
-        #                       renderArgs={'color':(0.6,0.6,0.6),
+        #                       render_args={'color':(0.6,0.6,0.6),
         #                                   'tube_radius':0.5,
         #                                   'tube_sides':12
         #                                   }

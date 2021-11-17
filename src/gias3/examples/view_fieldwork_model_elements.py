@@ -37,18 +37,18 @@ def main():
     )
 
     # visualise
-    viewer = fieldvi.Fieldvi()
+    viewer = fieldvi.FieldVi()
     viewer.GFD = model_discretisation
     # viewer.displayGFNodes = False # uncomment to not draw nodes
     viewer.addGeometricField('tibia', tibia_model,
                              tibia_model_evaluator,
-                             renderArgs=model_render_args
+                             render_args=model_render_args
                              )
     viewer.configure_traits()
     # make sure model is visible
     viewer._drawGeometricField('tibia')
     # draw element numbers on model
-    viewer.drawGeometricFieldElementNumbers('tibia', textScale=3.0, textColor=(0, 0, 0))
+    viewer.drawGeometricFieldElementNumbers('tibia', text_scale=3.0, text_color=(0, 0, 0))
     # draw element boundaries
     nodes_to_elemtype_map = {4: 'line4l'}  # what type of line element to draw for a given number of edge nodes
     elem_basis_map = {'line4l': 'line_L3'}  # what type of 1-d basis function to use with a given element type

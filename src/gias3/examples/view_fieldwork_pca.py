@@ -59,7 +59,7 @@ def main():
 
     # visualise 3D models
     modelEval = geometric_field.makeGeometricFieldEvaluatorSparse(meanModel, discretisation)
-    V = fieldvi.Fieldvi()
+    V = fieldvi.FieldVi()
     V.displayGFNodes = False  # hide mesh nodes
     V.GFD = discretisation  # element discretisation
     V.addGeometricField('mean model', meanModel, modelEval)  # add mesh to viewer with the evaluator and a name

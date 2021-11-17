@@ -191,9 +191,9 @@ def calcSegmentationErrors(mesh_file_test, mesh_file_gt, jac_img_spacing, gt_sca
 
 
 def visualise(V, surf_test, surf_gt, img_test, img_gt):
-    V.addTri('test surface', surf_test, renderArgs={'color': (0.4, 0.4, 0.4)})
+    V.addTri('test surface', surf_test, render_args={'color': (0.4, 0.4, 0.4)})
     V.updateTriSurface('test surface')
-    V.addTri('ground truth surface', surf_gt, renderArgs={'color': (0.84705882, 0.8, 0.49803922)})
+    V.addTri('ground truth surface', surf_gt, render_args={'color': (0.84705882, 0.8, 0.49803922)})
     V.updateTriSurface('ground truth surface')
     V.addImageVolume(img_gt.astype(float), 'groundtruth')
     V.addImageVolume(img_test.astype(float), 'test')
@@ -265,7 +265,7 @@ def main():
         writeResults(args.outpath, testName, gtName, results)
 
     if args.display and can_visual:
-        V = fieldvi.Fieldvi()
+        V = fieldvi.FieldVi()
         V.configure_traits()
         V.scene.background = (0, 0, 0)
         visualise(V, surfTest, surfGT, imgTest, imgGT)

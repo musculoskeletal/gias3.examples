@@ -87,8 +87,8 @@ def fitBone(scan_number, data, GF, params, align=True, HMF=True, nodal=True, PCF
 
 
 def combineHipMeshes(LH, RH, sac, name):
-    combGF = geometric_field.geometric_field(name, 3, field_dimensions=2,
-                                             field_basis={'tri10': 'simplex_L3_L3', 'quad44': 'quad_L3_L3'})
+    combGF = geometric_field.GeometricField(name, 3, field_dimensions=2,
+                                            field_basis={'tri10': 'simplex_L3_L3', 'quad44': 'quad_L3_L3'})
     combGF.ensemble_field_function.name = 'pelvis_combined_cubic'
     combGF.ensemble_field_function.mesh.name = 'pelvis_combined_cubic'
 

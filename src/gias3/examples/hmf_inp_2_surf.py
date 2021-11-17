@@ -248,13 +248,13 @@ def main():
     # =============================================================#
     # view
     if args.view:
-        v = fieldvi.Fieldvi()
-        v.addData('target surface', target_surf_points, renderArgs={'mode': 'point', 'color': (1, 0, 0)})
-        v.addData('source surface', source_surf_points, renderArgs={'mode': 'point'})
-        v.addData('source surface reg1', source_surf_points_reg1, renderArgs={'mode': 'point'})
-        v.addData('source surface reg2', source_surf_points_reg2, renderArgs={'mode': 'point'})
-        v.addData('source surface hmf', source_surf_points_hmf, renderArgs={'mode': 'point'})
-        v.addData('source nodes hmf', source_mesh.nodes, renderArgs={'mode': 'point'})
+        v = fieldvi.FieldVi()
+        v.addData('target surface', target_surf_points, render_args={'mode': 'point', 'color': (1, 0, 0)})
+        v.addData('source surface', source_surf_points, render_args={'mode': 'point'})
+        v.addData('source surface reg1', source_surf_points_reg1, render_args={'mode': 'point'})
+        v.addData('source surface reg2', source_surf_points_reg2, render_args={'mode': 'point'})
+        v.addData('source surface hmf', source_surf_points_hmf, render_args={'mode': 'point'})
+        v.addData('source nodes hmf', source_mesh.nodes, render_args={'mode': 'point'})
 
         v.configure_traits()
         v.scene.background = (0, 0, 0)

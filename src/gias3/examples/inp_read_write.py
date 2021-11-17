@@ -1,5 +1,5 @@
 """
-FILE: inptest.py
+FILE: test_inptest.py
 LAST MODIFIED: 24-12-2015 
 DESCRIPTION: Test INP reading and writing
 

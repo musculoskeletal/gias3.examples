@@ -50,11 +50,11 @@ def main():
           % {'u': distMean, 'sd': distSD, 'rms': distRMS, 'max': distMax, 'min': distMin})
 
     # render
-    V = fieldvi.Fieldvi()
-    # ~ V.addTri( 'auto', auto_mesh.getSimplemesh(), renderArgs={'color':(0,0,1)} )
+    V = fieldvi.FieldVi()
+    # ~ V.addTri( 'auto', auto_mesh.getSimplemesh(), render_args={'color':(0,0,1)} )
     V.addTri('autoCarpal', auto_mesh)
     V.addTriScalarData('autoCarpal', 'closest distance', cDist)
-    V.addTri('manualCarpal', manual_mesh, renderArgs={'color': (0, 0, 1)})
+    V.addTri('manualCarpal', manual_mesh, render_args={'color': (0, 0, 1)})
 
     V.configure_traits()
     V.scene.background = (1, 1, 1)

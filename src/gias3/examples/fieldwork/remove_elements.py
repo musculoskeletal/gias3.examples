@@ -43,7 +43,7 @@ def main():
     F.set_basis({'quad33': 'quad_L2_L2'})
     F.set_new_mesh('quadratic_quad')
 
-    G = GF.geometric_field('quad33-4elem', 3, ensemble_field_function=F)
+    G = GF.GeometricField('quad33-4elem', 3, ensemble_field_function=F)
     n = 3
     element = element_types.create_element('quad33')
     G.add_element_with_parameters(element, makeElemParams(0, 50, 0, 50, n))
@@ -84,4 +84,4 @@ def main():
     # V.drawElementBoundaries( 'quad', [50,],
     #                        GF.makeGeometricFieldEvaluatorSparse,
     #                        nNodesElemMap, elemBasisMap,
-    #                        renderArgs={'color':(0.6,0.6,0.6), 'tube_radius':0.5, 'tube_sides':12} )
+    #                        render_args={'color':(0.6,0.6,0.6), 'tube_radius':0.5, 'tube_sides':12} )

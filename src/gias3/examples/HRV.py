@@ -111,8 +111,8 @@ def main():
     # ===============================================================================#
     if has_mayavi:
         # visualise
-        V = fieldvi.Fieldvi()
-        V.addImageVolume(hrv.I, 'image', renderArgs={'vmin': -200, 'vmax': 1800})
+        V = fieldvi.FieldVi()
+        V.addImageVolume(hrv.I, 'image', render_args={'vmin': -200, 'vmax': 1800})
         V.addImageVolume(hrv.II.II.astype(float), 'integral image')
         V.configure_traits()
         V.scene.background = (0, 0, 0)

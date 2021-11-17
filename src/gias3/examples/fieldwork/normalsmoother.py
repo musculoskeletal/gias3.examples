@@ -85,7 +85,7 @@ def makeMesh(theta):
     F = EFF.EnsembleFieldFunction('quad', 2, debug=0)
     F.set_basis({'quad55': 'quad_L4_L4'})
     F.set_new_mesh('quartic_quad')
-    G = GF.geometric_field('quad55-2elem', 3, ensemble_field_function=F)
+    G = GF.GeometricField('quad55-2elem', 3, ensemble_field_function=F)
     element = element_types.create_element('quad55')
     G.add_element_with_parameters(element, makeElemParams(0, 50, 0, 50, 0))
     element = element_types.create_element('quad55')

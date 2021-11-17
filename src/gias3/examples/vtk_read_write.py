@@ -55,7 +55,7 @@ def main():
     reader.read(output_filename_vtp)
     mesh_vtp = reader.getSimplemesh()
 
-    V = fieldvi.Fieldvi()
+    V = fieldvi.FieldVi()
     V.addTri('original', mesh)
     V.addTri('ply', mesh_ply)
     V.addTri('stl', mesh_stl)

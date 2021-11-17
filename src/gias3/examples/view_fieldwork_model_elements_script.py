@@ -54,20 +54,20 @@ def main(args):
     )
 
     # visualise
-    viewer = fieldvi.Fieldvi()
+    viewer = fieldvi.FieldVi()
     viewer.GFD = model_discretisation
     model_render_args = {'opacity': float(args.opacity)}
     # viewer.displayGFNodes = False # uncomment to not draw nodes
     viewer.addGeometricField('model', input_model,
                              input_model_evaluator,
-                             renderArgs=model_render_args
+                             render_args=model_render_args
                              )
     viewer.configure_traits()
     # make sure model is visible
     viewer._drawGeometricField('model')
     # draw element numbers on model
     viewer.drawGeometricFieldElementNumbers(
-        'model', textScale=3.0, textColor=(0, 0, 0)
+        'model', text_scale=3.0, text_color=(0, 0, 0)
     )
     # draw element boundaries
     nodes_to_elemtype_map = {3: 'line3l', 4: 'line4l',

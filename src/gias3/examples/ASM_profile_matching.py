@@ -49,7 +49,7 @@ except ImportError:
     has_plot = False
 
 try:
-    from gias2.visualisation import fieldvi
+    from gias3.visualisation import fieldvi
 
     has_mayavi = True
 except ImportError:
@@ -262,32 +262,32 @@ def main():
 
     if has_mayavi:
         # visualise in 3D
-        V = fieldvi.Fieldvi()
+        V = fieldvi.FieldVi()
         # the segmentation image
         V.addImageVolume(segScan.I, 'segImage')
         # initial landmark coordinates
         V.addData(
             'initial landmarks',
             landmarkCoordsT,
-            renderArgs={'mode': 'sphere', 'scale_factor': 0.5, 'color': (0, 0, 1)}
+            render_args={'mode': 'sphere', 'scale_factor': 0.5, 'color': (0, 0, 1)}
         )
         # final predicted landmark positions, before rigid-body registration
         V.addData(
             'seg landmarks',
             segData,
-            renderArgs={'mode': 'sphere', 'scale_factor': 0.5, 'color': (1, 0, 0)}
+            render_args={'mode': 'sphere', 'scale_factor': 0.5, 'color': (1, 0, 0)}
         )
         # final landmark positions, after rigid-body registration
         V.addData(
             'fitted landmarks',
             landmarkCoordsFit,
-            renderArgs={'mode': 'sphere', 'scale_factor': 0.5, 'color': (0, 1, 0)}
+            render_args={'mode': 'sphere', 'scale_factor': 0.5, 'color': (0, 1, 0)}
         )
         # profile sampling points based on initial landmark positions
         V.addData(
             'initial sampling points',
             np.vstack(profileSamplingPoints),
-            renderArgs={'mode': 'sphere', 'scale_factor': 0.1}
+            render_args={'mode': 'sphere', 'scale_factor': 0.1}
         )
 
         V.configure_traits()

@@ -300,9 +300,9 @@ def main():
 
         if has_mayavi:
             v = fieldvi.FieldVi()
-            # v.addImageVolume(s.I, 'CT', renderArgs={'vmax':2000, 'vmin':-200})
+            # v.addImageVolume(s.I, 'CT', render_args={'vmax':2000, 'vmin':-200})
             v.addImageVolume(s.I, 'CT', render_args={'vmax': params.phantom_hu, 'vmin': params.water_hu})
-            # v.addData('centroids_img', centroids_img, scalar=E, renderArgs={'mode':'point'})
+            # v.addData('centroids_img', centroids_img, scalar=E, render_args={'mode':'point'})
             v.addData('centroids_img', centroids_img, scalar=E_bin_number, render_args={'mode': 'point'})
             v.addData('centroids_surf_img', centroids_img[inp_surf_elems_inds],
                       render_args={'mode': 'point', 'color': (1, 1, 1)})

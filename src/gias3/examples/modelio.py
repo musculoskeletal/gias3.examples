@@ -24,7 +24,7 @@ def main():
     meshes = simplemesh.vrml_2_simple_mesh(filename)[:2]
 
     # visualise models
-    V = fieldvi.Fieldvi()
+    V = fieldvi.FieldVi()
     for mi, m in enumerate(meshes):
         V.addTri('mesh_' + str(mi), m)
 
@@ -41,7 +41,7 @@ def main():
     fibulaInpMesh.setElems(meshes[1].f + 1, list(range(1, meshes[1].f.shape[0] + 1)), 'R3D3')
 
     inpFilename = 'outputs/tibia_fibula.inp'
-    inpWriter = inp.InpWriter(inpFilename, autoFormat=True)
+    inpWriter = inp.InpWriter(inpFilename, auto_format=True)
     inpWriter.addHeader('tibia fibula models')
     inpWriter.addMesh(tibiaInpMesh)
     inpWriter.addMesh(fibulaInpMesh)

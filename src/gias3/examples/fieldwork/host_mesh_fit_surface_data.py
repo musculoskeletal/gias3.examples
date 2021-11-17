@@ -55,7 +55,7 @@ def view_host_mesh(v, hm, name):
         geometric_field.makeGeometricFieldEvaluatorSparse,
         nNodesElemMap,
         elemBasisMap,
-        renderArgs={
+        render_args={
             'color': (0.6, 0.6, 0.6),
             'tube_radius': 0.2,
             'tube_sides': 6,
