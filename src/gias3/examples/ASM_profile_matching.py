@@ -32,7 +32,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ===============================================================================
 """
-
+import math as m
 import numpy as np
 from numpy import random
 from scipy.optimize import leastsq
@@ -84,11 +84,8 @@ def makeScan(image_size, int1_mean, int2_mean, int_mean_sd, int_sd):
     and a standard deviation of intMeanSD. Gaussian noise of s.d. intSD is 
     then added to each voxel. 
     """
-    int1 = random.normal(int1_mean, int_mean_sd)
-    int2 = random.normal(int2_mean, int_mean_sd)
-
     I = np.zeros(image_size)
-    halfX = image_size[0] / 2
+    halfX = m.floor(image_size[0] / 2)
     I[:halfX] = random.normal(int1_mean, int_sd, I[:halfX].shape)
     I[halfX:] = random.normal(int2_mean, int_sd, I[:halfX].shape)
 
