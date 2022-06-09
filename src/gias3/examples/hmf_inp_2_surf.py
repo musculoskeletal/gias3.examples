@@ -35,6 +35,8 @@ Last Modified: 17-03-2018
 
 import argparse
 import logging
+import os.path
+import sys
 
 import numpy as np
 from scipy.spatial import cKDTree
@@ -116,10 +118,25 @@ def main():
     # before host mesh fitting. Euler rotations are applied in order of Z, Y, X
     init_rot = np.deg2rad(args.rotate).tolist()  # [-np.pi/2, 0, 0]
 
-    sourceFilename = args.source_volume  # 'data/tibia_volume.inp'
-    sourceSurfFilename = args.source_surf  # 'data/tibia_surface.stl'
-    targetFilename = args.target_surf  # 'data/tibia_morphed.stl'
-    outputFilename = args.output  # 'data/tibia_volume_morphed.inp'
+    def _check_file_parameter(filename, input_file=True):
+        here = os.path.abspath(os.path.dirname(__file__))
+        if not os.path.isfile(filename) and not os.path.isabs(filename):
+            filename = os.path.join(here, args.source_volume)
+
+        if input_file and not os.path.isfile(filename):
+            sys.exit(1)
+
+        if not input_file:
+            output_dir = os.path.dirname(filename)
+            if not os.path.isdir(output_dir):
+                sys.exit(2)
+
+        return filename
+
+    sourceFilename = _check_file_parameter(args.source_volume)  # 'data/tibia_volume.inp'
+    sourceSurfFilename = _check_file_parameter(args.source_surf)  # 'data/tibia_surface.stl'
+    targetFilename = _check_file_parameter(args.target_surf)  # 'data/tibia_morphed.stl'
+    outputFilename = _check_file_parameter(args.output, False)  # 'data/tibia_volume_morphed.inp'
 
     # fititng parameters for host mesh fitting
     host_mesh_pad = 5.0  # host mesh padding around slave points
