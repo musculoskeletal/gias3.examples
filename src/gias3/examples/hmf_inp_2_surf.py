@@ -163,7 +163,7 @@ def main():
         xtol=1e-6,
         sample=1000,
         t0=np.array(init_trans + init_rot),
-        outputErrors=1
+        output_errors=1
     )
     log.info('rigid-body registration error: {}'.format(reg1_errors[1]))
     # add isotropic scaling to rigid registration
@@ -173,7 +173,7 @@ def main():
         xtol=1e-6,
         sample=1000,
         t0=np.hstack([reg1_T, 1.0]),
-        outputErrors=1
+        output_errors=1
     )
     log.info('rigid-body + scaling registration error: {}'.format(reg2_errors[1]))
 
